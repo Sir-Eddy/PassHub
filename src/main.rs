@@ -1,12 +1,19 @@
-use std::io;
+//Andere Dateien: src/view.rs, src/api.rs
+mod view;
+mod api; 
 
+//Importieren benötigter Bibliotheken
+use std::io;
 use ratatui::{
     crossterm::event::{self, KeyCode, KeyEventKind},
     style::Stylize,
     widgets::Paragraph,
     DefaultTerminal,
 };
+extern crate directories;
+use directories::{BaseDirs, UserDirs, ProjectDirs};
 
+//Main Funktion
 fn main() -> io::Result<()> {
     let mut terminal = ratatui::init();
     terminal.clear()?;
