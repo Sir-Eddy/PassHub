@@ -1,5 +1,5 @@
-use crate::view;
-use crate::api;
+use super::view;
+use super::api;
 
 use directories::ProjectDirs;
 use ratatui::backend;
@@ -21,6 +21,7 @@ pub fn get_backend_url() -> String {
     
     loop {
         if backend_url.is_none() {
+            create_file(); // Erstelle die Datei, falls sie nicht existiert
             // Eingabe-Schleife für die URL
             loop {
                 let temp_url: String = view::ask_for_url();

@@ -1,16 +1,16 @@
-//Andere Dateien: src/view.rs, src/api.rs, src/logik.rs
 mod view;
-mod api; 
-mod logik;
+mod url_check {
+    pub mod view;
+    pub mod api;
+    pub mod logik;
+}
+mod login {
+    pub mod view;
+    pub mod api;
+    pub mod logik;
+}
 
-//Importieren benötigter Bibliotheken
-use std::{io, string};
-use ratatui::{
-    crossterm::event::{self, KeyCode, KeyEventKind},
-    style::Stylize,
-    widgets::Paragraph,
-    DefaultTerminal,
-};
+
 use log::{debug, info, warn, error};
 use env_logger;
 
@@ -20,12 +20,15 @@ fn main() {
     //Logging initialisieren
     env_logger::init();
 
-    //Initialisierung des Terminals
-    //let mut terminal = ratatui::init();
-    //terminal.clear()?;
+    //Willkommensnachricht anzeigen
+    view::draw_welcome_screen();
+
 
     //Abruf der BackendURL
-    let backend_url: String = logik::get_backend_url();
+    let backend_url: String = url_check::logik::get_backend_url();
     debug!("Backend URL: {}", backend_url);
 
+    //Login
+    //let login_result: bool = login::logik::login(backend_url);
+    
 }
