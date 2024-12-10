@@ -6,6 +6,7 @@ use argon2::{
 use core::hash;
 use std::{io::Read, io::Write, string, fs};
 use directories::ProjectDirs;
+use regex::Regex;
 use super::{api, view};
 
 pub fn register(backend_url: String) -> String {
@@ -69,4 +70,20 @@ fn save_email_to_storage (email: &str) {
         let mut file = fs::File::create(&config_file).expect("Fehler beim Erstellen der Datei");
         file.write_all(email.as_bytes()).expect("Fehler beim Schreiben in die Datei");
     }
+}
+
+pub fn validate_password(password: &str) -> bool {
+    // Bedingung: Passwort muss mindestens 10 Zeichen lang sein
+    if password.len() < 10 {
+        return false;
+    }
+
+    // Regex-Kriterien für die Passwortprüfung
+    let has_uppercase = Regex::new(r"[A-Z]").unwrap().is_match(password); // Großbuchstaben
+    let has_lowercase = Regex::new(r"[a-z]").unwrap().is_match(password); // Kleinbuchstaben
+    let has_number = Regex::new(r"\d").unwrap().is_match(password);       // Zahlen
+    let has_special_char = Regex::new(r"[!@#$%^&*(),.?\:{}|<>]").unwrap().is_match(password); // Sonderzeichen
+
+    // Alle Kriterien müssen erfüllt sein
+    has_uppercase && has_lowercase && has_number && has_special_char
 }

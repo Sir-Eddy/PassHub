@@ -87,24 +87,30 @@ pub fn draw_login_screen(stored_email: String) -> (String, String) {
                 match key.code {
                     KeyCode::Enter => {
                         if is_password_field {
-                            break; // Exit the loop when 'Enter' is pressed on the password field
+                            break; // Beende die Schleife bei "Enter" im Passwortfeld
                         } else {
-                            is_password_field = true; // Switch to the password field
+                            is_password_field = true; // Wechsel zum Passwortfeld
                         }
                     }
                     KeyCode::Backspace => {
                         if is_password_field {
-                            password.pop(); // Remove the last character from password
+                            password.pop(); // Entfernt das letzte Zeichen im Passwort
                         } else {
-                            email.pop(); // Remove the last character from email
+                            email.pop(); // Entfernt das letzte Zeichen in der E-Mail
                         }
                     }
                     KeyCode::Char(c) => {
                         if is_password_field {
-                            password.push(c); // Add character to password
+                            password.push(c); // Fügt ein Zeichen zum Passwort hinzu
                         } else {
-                            email.push(c); // Add character to email
+                            email.push(c); // Fügt ein Zeichen zur E-Mail hinzu
                         }
+                    }
+                    KeyCode::Up => {
+                        is_password_field = false; // Wechsel zum E-Mail-Feld
+                    }
+                    KeyCode::Down => {
+                        is_password_field = true; // Wechsel zum Passwort-Feld
                     }
                     _ => {}
                 }

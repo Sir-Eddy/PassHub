@@ -11,100 +11,119 @@ use ratatui::{
     style::{Color, Modifier, Style},
     Terminal,
 };
-
 use std::io::{self, stdout};
+use super::{logik};
 
 pub fn draw_register_screen() -> (String, String) {
-    // Enable raw mode
+    // Terminal initialisieren
     enable_raw_mode().unwrap();
-
-    // Initialize the terminal
     let stdout = stdout();
     let backend = CrosstermBackend::new(stdout);
     let mut terminal = Terminal::new(backend).unwrap();
 
     terminal.clear().unwrap();
 
-    // Variables to store user input
     let mut email = String::new();
     let mut password = String::new();
     let mut is_password_field = false;
+    let mut error_message = String::new();
 
     loop {
-        terminal.draw(|f| {
-            let chunks = Layout::default()
-                .direction(Direction::Vertical)
-                .margin(2)
-                .constraints(
-                    [
-                        Constraint::Percentage(30),
-                        Constraint::Percentage(20),
-                        Constraint::Percentage(20),
-                        Constraint::Percentage(30),
-                    ]
-                    .as_ref(),
-                )
-                .split(f.area());
+        terminal
+            .draw(|f| {
+                let chunks = Layout::default()
+                    .direction(Direction::Vertical)
+                    .margin(2)
+                    .constraints(
+                        [
+                            Constraint::Percentage(30),
+                            Constraint::Percentage(20),
+                            Constraint::Percentage(20),
+                            Constraint::Percentage(10),
+                            Constraint::Percentage(20),
+                        ]
+                        .as_ref(),
+                    )
+                    .split(f.size());
 
-            // Title
-            let title = Paragraph::new("Register to PassHub")
-                .style(
-                    Style::default()
-                        .fg(Color::Yellow)
-                        .add_modifier(Modifier::BOLD),
-                )
-                .alignment(Alignment::Center)
-                .block(Block::default().borders(Borders::ALL).title("Register"));
+                // Titel
+                let title = Paragraph::new("Register to PassHub")
+                    .style(
+                        Style::default()
+                            .fg(Color::Yellow)
+                            .add_modifier(Modifier::BOLD),
+                    )
+                    .alignment(Alignment::Center)
+                    .block(Block::default().borders(Borders::ALL).title("Register"));
 
-            // Email Input
-            let email_paragraph = Paragraph::new(format!("E-Mail: {}", email))
-                .style(Style::default().fg(Color::White))
-                .block(
-                    Block::default()
-                        .borders(Borders::ALL)
-                        .title(if !is_password_field { "E-Mail" } else { " " }),
-                );
+                // E-Mail-Eingabe
+                let email_paragraph = Paragraph::new(format!("E-Mail: {}", email))
+                    .style(Style::default().fg(Color::White))
+                    .block(
+                        Block::default()
+                            .borders(Borders::ALL)
+                            .title(if !is_password_field { "E-Mail" } else { " " }),
+                    );
 
-            // Password Input
-            let password_masked: String = "*".repeat(password.len());
-            let password_paragraph = Paragraph::new(format!("Password: {}", password_masked))
-                .style(Style::default().fg(Color::White))
-                .block(
-                    Block::default()
-                        .borders(Borders::ALL)
-                        .title(if is_password_field { "Password" } else { " " }),
-                );
+                // Passwort-Eingabe
+                let password_masked: String = "*".repeat(password.len());
+                let password_paragraph = Paragraph::new(format!("Password: {}", password_masked))
+                    .style(Style::default().fg(Color::White))
+                    .block(
+                        Block::default()
+                            .borders(Borders::ALL)
+                            .title(if is_password_field { "Password" } else { " " }),
+                    );
 
-            // Render Widgets
-            f.render_widget(title, chunks[0]);
-            f.render_widget(email_paragraph, chunks[1]);
-            f.render_widget(password_paragraph, chunks[2]);
-        }).unwrap();
+                // Fehlermeldung
+                let error_paragraph = Paragraph::new(error_message.clone())
+                    .style(Style::default().fg(Color::Red))
+                    .alignment(Alignment::Center);
 
-        // Handle user input
+                f.render_widget(title, chunks[0]);
+                f.render_widget(email_paragraph, chunks[1]);
+                f.render_widget(password_paragraph, chunks[2]);
+                f.render_widget(error_paragraph, chunks[3]);
+            })
+            .unwrap();
+
+        // Eingaben lesen
         if let Event::Key(key) = event::read().unwrap() {
             if key.kind == KeyEventKind::Press {
                 match key.code {
                     KeyCode::Enter => {
                         if is_password_field {
-                            break; // Exit the loop when 'Enter' is pressed on the password field
+                            if logik::validate_password(&password) {
+                                break;
+                            } else {
+                                error_message = String::from(
+                                    "Invalid password: Must be at least 10 characters long and include uppercase letters, lowercase letters, numbers, and special characters.",
+                                );
+                                password.clear(); // Passwort zurücksetzen
+                            }
                         } else {
-                            is_password_field = true; // Switch to the password field
+                            is_password_field = true;
                         }
                     }
                     KeyCode::Backspace => {
                         if is_password_field {
-                            password.pop(); // Remove the last character from password
+                            password.pop();
                         } else {
-                            email.pop(); // Remove the last character from email
+                            email.pop();
                         }
                     }
                     KeyCode::Char(c) => {
                         if is_password_field {
-                            password.push(c); // Add character to password
+                            password.push(c);
                         } else {
-                            email.push(c); // Add character to email
+                            email.push(c);
                         }
+                    }
+                    KeyCode::Up => {
+                        is_password_field = false; // Fokus auf E-Mail-Feld
+                    }
+                    KeyCode::Down => {
+                        is_password_field = true; // Fokus auf Passwort-Feld
                     }
                     _ => {}
                 }
@@ -112,13 +131,14 @@ pub fn draw_register_screen() -> (String, String) {
         }
     }
 
-    // Clear and restore terminal
+    // Terminal bereinigen
     terminal.clear().unwrap();
     disable_raw_mode().unwrap();
     execute!(terminal.backend_mut(), crossterm::terminal::LeaveAlternateScreen).unwrap();
 
     (email, password)
 }
+
 
 
 pub fn error_argon2_fail() {

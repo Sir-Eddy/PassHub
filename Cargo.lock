@@ -1013,6 +1013,7 @@ dependencies = [
  "rand",
  "rand_core",
  "ratatui",
+ "regex",
  "reqwest",
  "serde_json",
  "url",
