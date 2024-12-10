@@ -33,7 +33,7 @@ pub fn ask_for_url() -> String {
                     ]
                     .as_ref(),
                 )
-                .split(frame.size());
+                .split(frame.area());
 
             // Message to the user
             let text = Paragraph::new("Please enter the Backend URL and press Enter:")
@@ -87,7 +87,7 @@ pub fn error_url_unavailable() {
 
     loop {
         terminal.draw(|frame| {
-            let size = frame.size();
+            let size = frame.area();
             let block = Block::default()
                 .borders(Borders::ALL)
                 .title("Error");
@@ -125,7 +125,7 @@ pub fn error_url_unreachable(backend_url: &Option<String>) {
 
     loop {
         terminal.draw(|frame| {
-            let size = frame.size();
+            let size = frame.area();
             let block = Block::default()
                 .borders(Borders::ALL)
                 .title("Error");

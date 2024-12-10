@@ -3,7 +3,7 @@ use serde_json::json;
 
 pub fn login_backend(base_url: &str, email: &str, password_hash: &str) -> Result<String, u16> {
     let client = Client::new();
-    let url = format!("{}/api/v1/auth/login", base_url); // Kombiniere Basis-URL mit API-Endpunkt
+    let url = format!("{}/api/v1/auth/register", base_url); // Kombiniere Basis-URL mit API-Endpunkt
 
     let payload = json!({
         "email": email,

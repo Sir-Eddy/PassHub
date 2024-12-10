@@ -12,7 +12,7 @@ use ratatui::{
 };
 use std::io::{self, stdout};
 
-pub fn draw_welcome_screen() {
+pub fn draw_welcome_screen() -> Option<char> {
     // Enable raw mode
     enable_raw_mode().unwrap();
 
@@ -35,9 +35,9 @@ pub fn draw_welcome_screen() {
                 ]
                 .as_ref(),
             )
-            .split(f.size());
+            .split(f.area());
 
-        // ASCII Art (adjust alignment and ensure proper formatting)
+        // ASCII Art
         let ascii_art = r#"
  ____              _   _       _      
 |  _ \            | | | |     | |     
@@ -52,8 +52,8 @@ pub fn draw_welcome_screen() {
             .style(Style::default().fg(Color::Yellow))
             .alignment(Alignment::Center);
 
-        // Welcome message
-        let welcome_text = Paragraph::new("Welcome to PassHub. Press Enter to continue.")
+        // Welcome message with instructions
+        let welcome_text = Paragraph::new("Welcome to PassHub.\nPress Enter to continue.\nFirst time here? Press 'r' to register.")
             .style(
                 Style::default()
                     .fg(Color::Black),
@@ -67,17 +67,21 @@ pub fn draw_welcome_screen() {
         f.render_widget(welcome_text, chunks[1]);
     }).unwrap();
 
-    // Wait for user to press 'Enter'
-    loop {
+    // Wait for user input
+    let result = loop {
         if let Event::Key(key) = event::read().unwrap() {
-            if key.code == KeyCode::Enter {
-                break;
+            match key.code {
+                KeyCode::Enter => break None, // Continue without registration
+                KeyCode::Char('r') => break Some('r'), // Return 'r' for registration
+                _ => {}
             }
         }
-    }
+    };
 
     // Clear and restore terminal
     terminal.clear().unwrap();
     disable_raw_mode().unwrap();
     execute!(terminal.backend_mut(), crossterm::terminal::LeaveAlternateScreen).unwrap();
+
+    result
 }

@@ -9,9 +9,14 @@ mod login {
     pub mod api;
     pub mod logik;
 }
+mod register {
+    pub mod view;
+    pub mod api;
+    pub mod logik;
+}
 
 
-use log::{debug, info, warn, error};
+use log::debug;
 use env_logger;
 
 //Main Funktion
@@ -21,7 +26,7 @@ fn main() {
     env_logger::init();
 
     //Willkommensnachricht anzeigen
-    view::draw_welcome_screen();
+    let first_time = view::draw_welcome_screen();
 
 
     //Abruf der BackendURL
@@ -29,6 +34,16 @@ fn main() {
     debug!("Backend URL: {}", backend_url);
 
     //Login
-    //let login_result: bool = login::logik::login(backend_url);
+    match first_time {
+        Some('r') => {
+            // Registrierung aufrufen
+            let token = register::logik::register(backend_url);
+        }
+        _ => {
+            // Login aufrufen
+            let token = login::logik::login(backend_url);
+            
+        }
+    }
     
 }

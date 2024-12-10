@@ -14,7 +14,7 @@ use ratatui::{
 
 use std::io::{self, stdout};
 
-pub fn draw_login_screen(stored_email: String) -> (String, String) {
+pub fn draw_register_screen() -> (String, String) {
     // Enable raw mode
     enable_raw_mode().unwrap();
 
@@ -26,9 +26,9 @@ pub fn draw_login_screen(stored_email: String) -> (String, String) {
     terminal.clear().unwrap();
 
     // Variables to store user input
-    let mut email = stored_email.clone();
+    let mut email = String::new();
     let mut password = String::new();
-    let mut is_password_field = !stored_email.is_empty();
+    let mut is_password_field = false;
 
     loop {
         terminal.draw(|f| {
@@ -47,14 +47,14 @@ pub fn draw_login_screen(stored_email: String) -> (String, String) {
                 .split(f.area());
 
             // Title
-            let title = Paragraph::new("PassHub Login")
+            let title = Paragraph::new("Register to PassHub")
                 .style(
                     Style::default()
                         .fg(Color::Yellow)
                         .add_modifier(Modifier::BOLD),
                 )
                 .alignment(Alignment::Center)
-                .block(Block::default().borders(Borders::ALL).title("Login"));
+                .block(Block::default().borders(Borders::ALL).title("Register"));
 
             // Email Input
             let email_paragraph = Paragraph::new(format!("E-Mail: {}", email))
@@ -155,41 +155,6 @@ pub fn error_argon2_fail() {
     execute!(io::stdout(), LeaveAlternateScreen).unwrap();
 }
 
-
-pub fn error_unauthorized() {
-    // Setup terminal for error screen
-    enable_raw_mode().unwrap();
-    let mut stdout = io::stdout();
-    execute!(stdout, EnterAlternateScreen).unwrap();
-    let backend = CrosstermBackend::new(stdout);
-    let mut terminal = Terminal::new(backend).unwrap();
-
-    loop {
-        terminal.draw(|frame| {
-            let size = frame.area();
-            let block = Block::default()
-                .borders(Borders::ALL)
-                .title("Error");
-
-            let paragraph = Paragraph::new("Login failed. Please check your credentials. \n Press Enter to try again.")
-                .block(block);
-
-            frame.render_widget(paragraph, size);
-        }).unwrap();
-
-        // Wait for user input to dismiss the error screen
-        if let Event::Key(key_event) = event::read().unwrap() {
-            if key_event.kind == KeyEventKind::Press && key_event.code == KeyCode::Enter {
-                break;
-            }
-        }
-    }
-
-    // Restore terminal
-    disable_raw_mode().unwrap();
-    execute!(io::stdout(), LeaveAlternateScreen).unwrap();
-}
-
 pub fn error_network() {
     // Setup terminal for error screen
     enable_raw_mode().unwrap();
@@ -215,48 +180,6 @@ pub fn error_network() {
         if let Event::Key(key_event) = event::read().unwrap() {
             if key_event.kind == KeyEventKind::Press && key_event.code == KeyCode::Enter {
                 break;
-            }
-        }
-    }
-
-    // Restore terminal
-    disable_raw_mode().unwrap();
-    execute!(io::stdout(), LeaveAlternateScreen).unwrap();
-}
-
-
-pub fn error_user_not_found() {
-    // Setup terminal for error screen
-    enable_raw_mode().unwrap();
-    let mut stdout = io::stdout();
-    execute!(stdout, EnterAlternateScreen).unwrap();
-    let backend = CrosstermBackend::new(stdout);
-    let mut terminal = Terminal::new(backend).unwrap();
-
-    loop {
-        terminal.draw(|frame| {
-            let size = frame.area();
-            let block = Block::default()
-                .borders(Borders::ALL)
-                .title("Error");
-
-            let paragraph = Paragraph::new("User not found. \nPress Enter to try again.\nTo register, press 'r' on the welcome screen. Press 'ESC' to exit.")
-                .block(block);
-
-            frame.render_widget(paragraph, size);
-        }).unwrap();
-
-        // Wait for user input to dismiss the error screen
-        if let Event::Key(key_event) = event::read().unwrap() {
-            match key_event.kind {
-                KeyEventKind::Press => match key_event.code {
-                    KeyCode::Enter => break, // Verlasse den Fehlerbildschirm
-                    KeyCode::Esc => {
-                        std::process::exit(0); // Schließe das Programm
-                    }
-                    _ => {}
-                },
-                _ => {}
             }
         }
     }
@@ -315,7 +238,7 @@ pub fn error_unknown() {
                 .borders(Borders::ALL)
                 .title("Error");
 
-            let paragraph = Paragraph::new("Unknown. \n Press Enter to try again.")
+            let paragraph = Paragraph::new("Unknown Error. \n Press Enter to try again.")
                 .block(block);
 
             frame.render_widget(paragraph, size);
@@ -325,6 +248,47 @@ pub fn error_unknown() {
         if let Event::Key(key_event) = event::read().unwrap() {
             if key_event.kind == KeyEventKind::Press && key_event.code == KeyCode::Enter {
                 break;
+            }
+        }
+    }
+
+    // Restore terminal
+    disable_raw_mode().unwrap();
+    execute!(io::stdout(), LeaveAlternateScreen).unwrap();
+}
+
+pub fn error_user_exists() {
+    // Setup terminal for error screen
+    enable_raw_mode().unwrap();
+    let mut stdout = io::stdout();
+    execute!(stdout, EnterAlternateScreen).unwrap();
+    let backend = CrosstermBackend::new(stdout);
+    let mut terminal = Terminal::new(backend).unwrap();
+
+    loop {
+        terminal.draw(|frame| {
+            let size = frame.area();
+            let block = Block::default()
+                .borders(Borders::ALL)
+                .title("Error");
+
+            let paragraph = Paragraph::new("User already exists. \nPress Enter to try again.\nTo login press any key except 'r' on the welcome screen. Press 'ESC' to exit.")
+                .block(block);
+
+            frame.render_widget(paragraph, size);
+        }).unwrap();
+
+        // Wait for user input to dismiss the error screen
+        if let Event::Key(key_event) = event::read().unwrap() {
+            match key_event.kind {
+                KeyEventKind::Press => match key_event.code {
+                    KeyCode::Enter => break, // Verlasse den Fehlerbildschirm
+                    KeyCode::Esc => {
+                        std::process::exit(0); // Schließe das Programm
+                    }
+                    _ => {}
+                },
+                _ => {}
             }
         }
     }

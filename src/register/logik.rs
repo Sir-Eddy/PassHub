@@ -8,14 +8,11 @@ use std::{io::Read, io::Write, string, fs};
 use directories::ProjectDirs;
 use super::{api, view};
 
-pub fn login(backend_url: String) -> String {
+pub fn register(backend_url: String) -> String {
     loop {
 
-    // E-Mail aus dem Speicher laden
-    let stored_email = get_mail_from_storage();
-
     // Benutzername und Passwort abfragen
-    let (email, mut cleartext_password) = view::draw_login_screen(stored_email);
+    let (email, mut cleartext_password) = view::draw_register_screen();
 
     // Passwort hashen
     match hash_argon_2(&cleartext_password, &email) {
@@ -31,8 +28,7 @@ pub fn login(backend_url: String) -> String {
                 Err(status) => {
                     match status {
                         400 => view::error_bad_request(),    // Bad request
-                        401 => view::error_unauthorized(),  // Unauthorized
-                        404 => view::error_user_not_found(),     // Not found
+                        409 => view::error_user_exists(),     // Allready exists
                         500 => view::error_network(),  // Internal server error
                         _ => view::error_unknown(), // Unknown error
                     }
@@ -62,35 +58,6 @@ fn hash_argon_2(password: &str, email: &str) -> Result<String, argon2::password_
     argon2.verify_password(password.as_bytes(), &parsed_hash)?;
 
     Ok(password_hash)
-}
-
-fn get_mail_from_storage () -> String {
-    // Hol das Projektverzeichnis
-    if let Some(proj_dirs) = ProjectDirs::from("dev", "passhub", "passhub") {
-        let config_dir = proj_dirs.config_dir();
-        let config_file = config_dir.join("mail.txt");
-
-        // Falls die Datei existiert, lese den Inhalt
-        if config_file.exists() {
-            let mut file = fs::File::open(&config_file).expect("Fehler beim Öffnen der Datei");
-            let mut mail = String::new();
-            file.read_to_string(&mut mail).expect("Fehler beim Lesen der Datei");
-
-            // Entferne Whitespaces und prüfe, ob eine URL vorhanden ist
-            let mail = mail.trim();
-            if mail.is_empty() {
-                return String::new();
-            } else {
-                return mail.to_string();
-            }
-        }
-        else {
-            return String::new();
-        }
-    }
-    else {
-        return String::new();
-    }
 }
 
 fn save_email_to_storage (email: &str) {
