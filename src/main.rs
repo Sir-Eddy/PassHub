@@ -14,7 +14,11 @@ mod register {
     pub mod api;
     pub mod logik;
 }
-
+mod password_display {
+    pub mod view;
+    pub mod api;
+    pub mod logik;
+}
 
 use log::debug;
 use env_logger;
@@ -45,5 +49,8 @@ fn main() {
             
         }
     }
+
+    //Passwörter anzeigen
+    password_display::logik::display_passwords(backend_url, token);
     
 }
