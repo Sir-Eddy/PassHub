@@ -37,20 +37,21 @@ fn main() {
     let backend_url: String = url_check::logik::get_backend_url();
     debug!("Backend URL: {}", backend_url);
 
+
+    let token: String;
     //Login
     match first_time {
         Some('r') => {
             // Registrierung aufrufen
-            let token = register::logik::register(backend_url);
+            token = register::logik::register(backend_url.clone());
         }
         _ => {
             // Login aufrufen
-            let token = login::logik::login(backend_url);
-            
+            token = login::logik::login(backend_url.clone());
         }
     }
 
     //Passwörter anzeigen
-    password_display::logik::display_passwords(backend_url, token);
+    password_display::logik::display_passwords(backend_url.clone(), token);
     
 }
