@@ -9,7 +9,7 @@ use directories::ProjectDirs;
 use regex::Regex;
 use super::{api, view};
 
-pub fn register(backend_url: String) -> String {
+pub fn register(backend_url: &String) -> String {
     loop {
 
     // Benutzername und Passwort abfragen

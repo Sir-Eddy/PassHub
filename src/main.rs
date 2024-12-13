@@ -43,15 +43,15 @@ fn main() {
     match first_time {
         Some('r') => {
             // Registrierung aufrufen
-            token = register::logik::register(backend_url.clone());
+            token = register::logik::register(&backend_url);
         }
         _ => {
             // Login aufrufen
-            token = login::logik::login(backend_url.clone());
+            token = login::logik::login(&backend_url);
         }
     }
 
     //Passwörter anzeigen
-    password_display::logik::display_passwords(backend_url.clone(), token);
+    password_display::logik::display_passwords(&backend_url, token);
     
 }

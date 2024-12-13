@@ -3,12 +3,13 @@ use argon2::{
     password_hash::{SaltString, PasswordHash, PasswordHasher, PasswordVerifier},
     Argon2, Algorithm, Params, Version,
 };
+use ratatui::backend;
 use core::hash;
 use std::{io::Read, io::Write, string, fs};
 use directories::ProjectDirs;
 use super::{api, view};
 
-pub fn login(backend_url: String) -> String {
+pub fn login(backend_url: &String) -> String {
     loop {
 
     // E-Mail aus dem Speicher laden
