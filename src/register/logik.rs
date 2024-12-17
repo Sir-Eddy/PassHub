@@ -7,6 +7,7 @@ use core::hash;
 use std::{io::Read, io::Write, string, fs};
 use directories::ProjectDirs;
 use regex::Regex;
+use zeroize::Zeroize;
 use super::{api, view};
 
 pub fn register(backend_url: &String) -> String {
@@ -18,7 +19,7 @@ pub fn register(backend_url: &String) -> String {
     // Passwort hashen
     match hash_argon_2(&cleartext_password, &email) {
         Ok(password_hash) => {
-            cleartext_password.clear(); // Klartext-Passwort aus dem Speicher löschen
+            cleartext_password.zeroize(); // Klartext-Passwort aus dem Speicher löschen
 
             // Weiter mit dem Backend-Login
             match api::login_backend(&backend_url, &email, &password_hash) {
