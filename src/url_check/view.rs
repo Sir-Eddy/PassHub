@@ -1,12 +1,15 @@
 use ratatui::{
-    backend::{self, Backend, CrosstermBackend}, layout::{Constraint, Direction, Layout}, text::Span, widgets::{Block, Borders, Paragraph}, Terminal
+    backend::CrosstermBackend,
+    layout::{Constraint, Direction, Layout},
+    widgets::{Block, Borders, Paragraph},
+    Terminal
 };
 use crossterm::{
     event::{self, DisableMouseCapture, EnableMouseCapture, Event, KeyCode, KeyEventKind},
     execute,
     terminal::{disable_raw_mode, enable_raw_mode, EnterAlternateScreen, LeaveAlternateScreen},
 };
-use std::io::{self, Write};
+use std::io::{self};
 
 
 

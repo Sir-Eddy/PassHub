@@ -2,7 +2,6 @@ use super::view;
 use super::api;
 
 use directories::ProjectDirs;
-use ratatui::backend;
 use std::fs;
 use std::io::Read;
 use std::io::Write;

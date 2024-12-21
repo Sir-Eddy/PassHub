@@ -4,13 +4,13 @@ use crossterm::{
     terminal::{disable_raw_mode, enable_raw_mode},
 };
 use ratatui::{
-    backend::{CrosstermBackend},
+    backend::CrosstermBackend,
     layout::{Alignment, Layout, Constraint, Direction},
     style::{Color, Style},
-    widgets::{Paragraph},
+    widgets::Paragraph,
     Terminal,
 };
-use std::io::{self, stdout};
+use std::io::stdout;
 
 pub fn draw_welcome_screen() -> Option<char> {
     // Enable raw mode

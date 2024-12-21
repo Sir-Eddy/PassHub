@@ -1,10 +1,8 @@
-use rand::rngs::OsRng;
 use argon2::{
     password_hash::{SaltString, PasswordHash, PasswordHasher, PasswordVerifier},
     Argon2, Algorithm, Params, Version,
 };
-use core::hash;
-use std::{io::Read, io::Write, string, fs};
+use std::{io::Write, fs};
 use directories::ProjectDirs;
 use regex::Regex;
 use zeroize::Zeroize;
@@ -48,7 +46,7 @@ pub fn register(backend_url: &String) -> String {
 
 fn hash_argon_2(password: &str, email: &str) -> Result<String, argon2::password_hash::Error> {
 
-    let salt = SaltString::b64_encode(email.as_bytes())?;
+    let salt = SaltString::encode_b64(email.as_bytes())?;
     let params = Params::new(65536, 3, 1, None)?; // 64 MiB, 3 iterations, 1 lane/thread
     let argon2 = Argon2::new(Algorithm::Argon2id, Version::V0x13, params);
 
