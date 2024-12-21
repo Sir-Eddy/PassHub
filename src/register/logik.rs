@@ -8,7 +8,7 @@ use regex::Regex;
 use zeroize::Zeroize;
 use super::{api, view};
 
-pub fn register(backend_url: &String) -> String {
+pub fn register(backend_url: &String) -> (String, String) {
     loop {
 
     // Benutzername und Passwort abfragen
@@ -23,7 +23,7 @@ pub fn register(backend_url: &String) -> String {
             match api::login_backend(&backend_url, &email, &password_hash) {
                 Ok(token) => {
                     save_email_to_storage(&email); // E-Mail speichern
-                    return token; // JWT-Token zurückgeben
+                    return (token, password_hash); // JWT-Token zurückgeben
                 }
                 Err(status) => {
                     match status {
@@ -35,7 +35,7 @@ pub fn register(backend_url: &String) -> String {
                 }
             }
         }
-        Err(e) => {
+        Err(_e) => {
             cleartext_password.clear(); // Klartext-Passwort aus dem Speicher löschen
             view::error_argon2_fail();
             std::process::exit(1);

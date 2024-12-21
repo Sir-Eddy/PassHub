@@ -14,7 +14,7 @@ mod register {
     pub mod api;
     pub mod logik;
 }
-mod password_display {
+mod menue {
     pub mod view;
     pub mod api;
     pub mod logik;
@@ -33,25 +33,32 @@ fn main() {
     let first_time = view::draw_welcome_screen();
 
 
+    //Outer Loop - JWT Token und Passwort Hash abfragen
+    loop {
     //Abruf der BackendURL
     let backend_url: String = url_check::logik::get_backend_url();
     debug!("Backend URL: {}", backend_url);
 
 
     let token: String;
+    let password_hash: String;
     //Login
     match first_time {
         Some('r') => {
             // Registrierung aufrufen
-            token = register::logik::register(&backend_url);
+            (token, password_hash) = register::logik::register(&backend_url);
         }
         _ => {
             // Login aufrufen
-            token = login::logik::login(&backend_url);
+            (token, password_hash) = login::logik::login(&backend_url);
         }
     }
 
+    //Inner Loop - Passwörter anzeigen, solange JWT Token gültig ist
+    loop {
     //Passwörter anzeigen
-    password_display::logik::display_passwords(&backend_url, token);
+    menue::logik::main_menue(&backend_url, &token, &password_hash);
+    }
+    }
     
 }
