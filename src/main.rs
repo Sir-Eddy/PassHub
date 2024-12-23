@@ -33,7 +33,7 @@ fn main() {
     let first_time = view::draw_welcome_screen();
 
 
-    //Outer Loop - JWT Token und Passwort Hash abfragen
+    //Loop - JWT Token und Passwort Hash abfragen, danach Menü anzeigen
     loop {
     //Abruf der BackendURL
     let backend_url: String = url_check::logik::get_backend_url();
@@ -54,11 +54,7 @@ fn main() {
         }
     }
 
-    //Inner Loop - Passwörter anzeigen, solange JWT Token gültig ist
-    loop {
-    //Passwörter anzeigen
     menue::logik::main_menue(&backend_url, &token, &password_hash);
-    }
     }
     
 }
