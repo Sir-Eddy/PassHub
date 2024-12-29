@@ -1,6 +1,6 @@
 use log::debug;
 use serde_json::Value;
-use std::{error::Error,  io::{self, stdout}};
+use std::{error::Error,  io::{self, stdout, ErrorKind}};
 use crossterm::{
     event::{self, Event, KeyCode, KeyEventKind},
     execute,
@@ -11,12 +11,11 @@ use ratatui::{
     backend::CrosstermBackend, layout::{Constraint, Direction, Layout, Rect}, prelude::Backend, style::{Color, Modifier, Style}, widgets::{Block, Borders, List, ListDirection, ListItem, ListState, Paragraph}, Terminal
 };
 
-use super::logik;
+use super::logik::{self, get_uris};
 
 
 pub fn display_data(json_data: Value) -> Result<(), Box<dyn Error>> {
-    todo!();
-    /* 
+    todo!("An Änderungen in logik.rs anpassen");
     let uris = super::logik::get_uris(json_data);
     match uris{
         Ok(vector) => {display_uris(vector)},
@@ -58,7 +57,6 @@ pub fn display_uris(uris: Vec<String>) -> Result<(), Box<dyn std::error::Error>>
     todo!();
     }
 
-    Ok(())
 }
 
 
