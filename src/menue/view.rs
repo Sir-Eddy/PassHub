@@ -15,19 +15,20 @@ use super::logik;
 
 
 pub fn display_data(json_data: Value) -> Result<(), Box<dyn Error>> {
-    todo!("An Änderungen in logik.rs anpassen");
+    todo!();
+    /* 
     let uris = super::logik::get_uris(json_data);
     match uris{
         Ok(vector) => {display_uris(vector)},
         Err(e)=> {debug!("Error while parsing JSON!");
     Err(Box::new(e))},
     }
+    */
 
 }
 
 
 pub fn display_uris(uris: Vec<String>) -> Result<(), Box<dyn std::error::Error>> {
-    todo!("An Änderungen in display_data anpassen");
     // Convert URIs to ListItem objects for TUI
     let uri_items: Vec<ListItem> = uris
         .into_iter()
@@ -79,7 +80,7 @@ pub fn invalid_token() {
                 .borders(Borders::ALL)
                 .title("Error");
 
-            let paragraph = Paragraph::new("Session longer than one hour. \nPlease sign in again.")
+            let paragraph = Paragraph::new("Session longer than one hour. \n Please sign in again.")
                 .block(block);
 
             frame.render_widget(paragraph, size);
@@ -113,7 +114,7 @@ pub fn database_error() {
                 .borders(Borders::ALL)
                 .title("Error");
 
-            let paragraph = Paragraph::new("Internal Server Error! \nPlease sign in again.")
+            let paragraph = Paragraph::new("Internal Server Error! \n Please sign in again.")
                 .block(block);
 
             frame.render_widget(paragraph, size);
@@ -147,7 +148,7 @@ pub fn unknown_error() {
                 .borders(Borders::ALL)
                 .title("Error");
 
-            let paragraph = Paragraph::new("Unknown Error. \nPlease sign in again.")
+            let paragraph = Paragraph::new("Unknown Error. \n Please sign in again.")
                 .block(block);
 
             frame.render_widget(paragraph, size);
