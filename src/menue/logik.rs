@@ -77,12 +77,12 @@ pub fn deserialize_json(json_data: Value)->Result<Vec<Entry>, Error>{
 
 
 #[derive(Debug, Serialize, Deserialize)]
-struct Uri {
+pub struct Uri {
     uri: String,
 }
 
 #[derive(Debug, Serialize, Deserialize)]
-struct Login {
+pub struct Login {
     uris: Vec<Uri>,
     username: Option<String>,
     password: String,
@@ -90,7 +90,7 @@ struct Login {
 }
 
 #[derive(Debug, Serialize, Deserialize)]
-struct Entry {
+pub struct Entry {
     id: String,
     name: String,
     notes: Option<String>,
