@@ -15,14 +15,20 @@ use super::logik::{self, get_uris};
 
 
 pub fn display_data(json_data: Value) -> Result<(), Box<dyn Error>> {
-    todo!("An Änderungen in logik.rs anpassen");
-    let uris = super::logik::get_uris(json_data);
+    let uris = super::logik::deserialize_json(json_data);
+    let uris = match uris{
+        Ok(_) => uris.unwrap(),
+        Err(_) => {debug!("There was an error while parsing JSON");
+        let error = std::io::Error::new(ErrorKind::Other, "Error while parsing json!");
+        panic!()},
+    };
+
+    let uris = get_uris(uris);
     match uris{
         Ok(vector) => {display_uris(vector)},
         Err(e)=> {debug!("Error while parsing JSON!");
     Err(Box::new(e))},
     }
-    */
 
 }
 
