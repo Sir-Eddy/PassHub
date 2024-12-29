@@ -8,7 +8,7 @@ pub fn main_menue(backend_url: &String, token: &String, password_hash: &String) 
 
     match json_data_result {
         Ok((_status_code, Some(json_data))) => {
-            view::display_data(json_data);
+            let _ = view::display_data(json_data);
         }
         Ok((401, None)) => {
             view::invalid_token();
@@ -22,11 +22,16 @@ pub fn main_menue(backend_url: &String, token: &String, password_hash: &String) 
             view::unknown_error();
             return;
         }
+        //TODO - ALWAYS RETURNING UNKNOWN ERROR - WHY?
         Err(_e) => {
             view::unknown_error();
             return;
         }
     }
+}
+
+pub fn add_password(){
+    todo!();
 }
 
 pub fn delete_user(){

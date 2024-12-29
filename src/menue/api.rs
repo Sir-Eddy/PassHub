@@ -54,3 +54,52 @@ fn decrypt_aes256_gcm(key: &[u8], nonce: &[u8], ciphertext: &[u8]) -> Vec<u8> {
     // Entschlüsseln
     cipher.decrypt(nonce, ciphertext).unwrap()
 }
+
+
+
+pub fn update(backend_url: &String, jwt_token: &String, user_password_hash: &String, data: &Value) -> Result<u16, Box<dyn std::error::Error>> {
+    // HTTP-Client erstellen
+    let client = Client::new();
+
+    // Daten in JSON-String umwandeln
+    let json_data = serde_json::to_string(data)?;
+
+    // Benutzer-Schlüssel in Bytes umwandeln
+    let key = hex_decode(user_password_hash)?;
+
+    // Initialisierung der Verschlüsselung
+    let cipher = Aes256Gcm::new(Key::<aes_gcm::aes::Aes256>::from_slice(&key));
+
+    // Nonce generieren (12 zufällige Bytes)
+    let nonce = generate_random_nonce();
+
+    // JSON-Daten verschlüsseln
+    let ciphertext = cipher
+        .encrypt(Nonce::from_slice(&nonce), json_data.as_bytes())
+        .map_err(|e| format!("Encryption error: {:?}", e))?;
+
+    // Nonce und Ciphertext kombinieren
+    let mut encrypted_data = nonce.to_vec();
+    encrypted_data.extend(ciphertext);
+
+    // Base64-kodierte Daten erstellen
+    let base64_data = STANDARD.encode(&encrypted_data);
+
+    // Anfrage senden
+    let response = client
+        .post(backend_url)
+        .header("Authorization", format!("Bearer {}", jwt_token))
+        .body(base64_data)
+        .send()?;
+
+    // HTTP-Statuscode zurückgeben
+    Ok(response.status().as_u16())
+}
+
+fn generate_random_nonce() -> [u8; 12] {
+    use rand::Rng;
+
+    let mut nonce = [0u8; 12];
+    rand::thread_rng().fill(&mut nonce);
+    nonce
+}
