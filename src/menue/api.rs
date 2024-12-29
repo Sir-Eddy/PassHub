@@ -10,10 +10,11 @@ use serde_json::Value;
 pub fn fetch(backend_url: &String, jwt_token: &String, user_password_hash: &String,) -> Result<(u16, Option<Value>), Box<dyn std::error::Error>> {
     // HTTP-Client erstellen
     let client = Client::new();
+    let request_url = format!("{}/api/v1/sync/fetch", backend_url);
 
     // API-Daten abrufen
     let response = client
-        .get(backend_url)
+        .get(&request_url)
         .header("Authorization", format!("Bearer {}", jwt_token))
         .send()?;
 
@@ -60,6 +61,7 @@ fn decrypt_aes256_gcm(key: &[u8], nonce: &[u8], ciphertext: &[u8]) -> Vec<u8> {
 pub fn update(backend_url: &String, jwt_token: &String, user_password_hash: &String, data: &Value) -> Result<u16, Box<dyn std::error::Error>> {
     // HTTP-Client erstellen
     let client = Client::new();
+    let request_url = format!("{}/api/v1/sync/update", backend_url);
 
     // Daten in JSON-String umwandeln
     let json_data = serde_json::to_string(data)?;
@@ -87,7 +89,7 @@ pub fn update(backend_url: &String, jwt_token: &String, user_password_hash: &Str
 
     // Anfrage senden
     let response = client
-        .post(backend_url)
+        .post(&request_url)
         .header("Authorization", format!("Bearer {}", jwt_token))
         .body(base64_data)
         .send()?;
