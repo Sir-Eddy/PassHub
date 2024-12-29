@@ -84,7 +84,7 @@ pub fn invalid_token() {
                 .borders(Borders::ALL)
                 .title("Error");
 
-            let paragraph = Paragraph::new("Session longer than one hour. \n Please sign in again.")
+            let paragraph = Paragraph::new("Session longer than one hour. \nPlease sign in again.")
                 .block(block);
 
             frame.render_widget(paragraph, size);
@@ -118,7 +118,7 @@ pub fn database_error() {
                 .borders(Borders::ALL)
                 .title("Error");
 
-            let paragraph = Paragraph::new("Internal Server Error! \n Please sign in again.")
+            let paragraph = Paragraph::new("Internal Server Error! \nPlease sign in again.")
                 .block(block);
 
             frame.render_widget(paragraph, size);
@@ -152,7 +152,7 @@ pub fn unknown_error() {
                 .borders(Borders::ALL)
                 .title("Error");
 
-            let paragraph = Paragraph::new("Unknown Error. \n Please sign in again.")
+            let paragraph = Paragraph::new("Unknown Error. \nPlease sign in again.")
                 .block(block);
 
             frame.render_widget(paragraph, size);

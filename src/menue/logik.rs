@@ -12,18 +12,18 @@ pub fn main_menue(backend_url: &String, token: &String, password_hash: &String) 
     let json_data_result = api::fetch(&backend_url, &token, &password_hash);
 
     match json_data_result {
-        Ok((_status_code, Some(json_data))) => {
+        Ok((200, Some(json_data))) => {
             let _ = view::display_data(json_data);
         }
-        Ok((401, None)) => {
+        Ok((401, _)) => {
             view::invalid_token();
             return;
         }
-        Ok((500, None)) => {
+        Ok((500, _)) => {
             view::database_error();
             return;
         }
-        Ok((_status_code, None)) => {
+        Ok((_status_code, _)) => {
             view::unknown_error();
             return;
         }
