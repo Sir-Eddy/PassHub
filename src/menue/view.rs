@@ -15,6 +15,7 @@ use super::logik;
 
 
 pub fn display_data(json_data: Value) -> Result<(), Box<dyn Error>> {
+    todo!("An Änderungen in logik.rs anpassen");
     let uris = super::logik::get_uris(json_data);
     match uris{
         Ok(vector) => {display_uris(vector)},
@@ -26,6 +27,7 @@ pub fn display_data(json_data: Value) -> Result<(), Box<dyn Error>> {
 
 
 pub fn display_uris(uris: Vec<String>) -> Result<(), Box<dyn std::error::Error>> {
+    todo!("An Änderungen in display_data anpassen");
     // Convert URIs to ListItem objects for TUI
     let uri_items: Vec<ListItem> = uris
         .into_iter()

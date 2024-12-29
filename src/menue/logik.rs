@@ -1,6 +1,11 @@
+use std::error;
+
 use serde_json::Error;
 use serde_json::Value;
+use serde_json::error::Category;
+use serde::{Serialize, Deserialize};
 use super::{api, view};
+use log::debug;
 
 pub fn main_menue(backend_url: &String, token: &String, password_hash: &String) {
     // Get the passwords from the backend
@@ -38,30 +43,56 @@ pub fn delete_user(){
     todo!();
 }
 
-pub fn get_uris(json_data: Value)->Result<Vec<std::string::String>, Error>{
+pub fn get_uris(json_entries:Vec<Entry>)->Result<Vec<String>, Error>{
     //array für die Speicherung der uris anlegen
     let mut uris = Vec::new();
-
-
-    //get all uris from all objects
-    if let Value::Array(entries) = json_data {
-        for entry in entries {
-            if let Some(login) = entry.get("login") {
-                if let Some(uris_array) = login.get("uris") {
-                    if let Value::Array(uris_list) = uris_array {
-                        for uri_object in uris_list {
-                            if let Some(uri) = uri_object.get("uri") {
-                                if let Value::String(uri_str) = uri {
-                                    uris.push(uri_str.to_string());
-                                }
-                            }
-                        }
-                    }
-                }
-            }
+    for element in json_entries{
+        for uri in element.login.uris {
+            uris.push(uri.uri);
         }
     }
-
     return Ok(uris);
 
+}
+
+pub fn deserialize_json(json_data: Value)->Result<Vec<Entry>, Error>{
+    todo!("Error handling noch fertig machen");
+    let entries  = serde_json::from_value(json_data);
+    match entries {
+        Ok(entry_list)=> Ok(entry_list),
+        Err(e) => {
+        match e.classify() {
+            Category::Io => {debug!("Failed to read or write bytes on an I/O stream");
+            return Err(e);},
+            Category::Syntax => {debug!("Input is not syntactically valid JSON");
+            return Err(e)},
+            Category::Data => {debug!("Input data is semantically incorrect");
+            return Err(e);},
+            Category::Eof => {debug!("Unexpected end of the input data");
+            return Err(e)},
+        }
+    }
+    }
+}
+
+
+#[derive(Debug, Serialize, Deserialize)]
+struct Uri {
+    uri: String,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+struct Login {
+    uris: Vec<Uri>,
+    username: Option<String>,
+    password: String,
+    totp: Option<String>,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+struct Entry {
+    id: String,
+    name: String,
+    notes: Option<String>,
+    login: Login,
 }
