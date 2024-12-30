@@ -47,6 +47,7 @@ pub fn fetch(backend_url: &String, jwt_token: &String, user_password_hash: &Stri
 }
 
 
+
 fn decrypt_aes256_gcm(key: &[u8], nonce: &[u8], ciphertext: &[u8]) -> Vec<u8> {
     // AES-GCM initialisieren
     let cipher = Aes256Gcm::new(Key::<aes_gcm::aes::Aes256>::from_slice(key));
