@@ -61,7 +61,7 @@ fn main() {
     let mut file = File::create("token.txt").unwrap();
     file.write_all(token.as_bytes()).unwrap();
 
-    
+    /* 
     //TODO - ONLY FOR TESTING - REMOVE LATER
     let json_data = serde_json::json!([
         {
@@ -106,6 +106,7 @@ fn main() {
         Ok(_) => println!("Daten erfolgreich in {} gespeichert.", file_name),
         Err(e) => println!("Fehler beim Schreiben der Datei: {:?}", e),
     }
+    */
     
 
     menue::logik::main_menue(&backend_url, &token, &password_hash);
