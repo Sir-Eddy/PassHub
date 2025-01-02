@@ -7,6 +7,17 @@ use serde::{Serialize, Deserialize};
 use super::{api, view};
 use log::debug;
 
+//TODO - ONLY FOR DEBUGGING - REMOVE LATER
+use std::fs::OpenOptions;
+use std::io::Write;
+
+pub fn log_error(message: &str) {
+    if let Ok(mut file) = OpenOptions::new().create(true).append(true).open("debug.log") {
+        let _ = writeln!(file, "{}", message);
+    }
+}
+
+
 pub fn main_menue(backend_url: &String, token: &String, password_hash: &String) {
     // Get the passwords from the backend
     let json_data_result = api::fetch(&backend_url, &token, &password_hash);
@@ -28,7 +39,8 @@ pub fn main_menue(backend_url: &String, token: &String, password_hash: &String) 
             return;
         }
         //TODO - ALWAYS RETURNING UNKNOWN ERROR - WHY?
-        Err(_e) => {
+        Err(e) => {
+            log_error(&format!("Unknown error occurred: {:?}", e));
             view::unknown_error();
             return;
         }

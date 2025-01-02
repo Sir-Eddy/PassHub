@@ -1,10 +1,11 @@
 use reqwest::blocking::Client;
 use base64::engine::general_purpose::STANDARD;
 use base64::Engine;
-use aes_gcm::{Aes256Gcm, Key, Nonce}; // Für AES-GCM
+use aes_gcm::{Aes256Gcm, Key, Nonce};
 use aes_gcm::aead::{Aead, KeyInit};
 use hex::decode as hex_decode;
 use serde_json::Value;
+use sha2::{Digest, Sha256};
 
 
 pub fn fetch(backend_url: &String, jwt_token: &String, user_password_hash: &String,) -> Result<(u16, Option<Value>), Box<dyn std::error::Error>> {
@@ -22,14 +23,27 @@ pub fn fetch(backend_url: &String, jwt_token: &String, user_password_hash: &Stri
 
     match status_code {
         200 => {
-            // Base64-encodierte Daten abrufen
-            let base64_data = response.text()?;
+
+            // Prüfen, ob eine JSON-Antwort vorhanden ist
+            let json_response: Option<Value> = response.json().ok();
+
+            // Wenn die JSON-Antwort leer ist, nur den Statuscode zurückgeben
+            if json_response.is_none() || json_response == Some(Value::Null) {
+                return Ok((status_code, None));
+            }
+
+            // Base64-String aus der JSON-Antwort extrahieren
+            let json_response = json_response.unwrap();
+            let base64_data = json_response["data"].as_str().unwrap_or("");
 
             // Base64-Dekodierung
             let decoded_data = STANDARD.decode(&base64_data)?;
+            if decoded_data.len() < 12 {
+                return Ok((status_code, None));
+            }
 
             // Benutzer-Schlüssel in Bytes umwandeln
-            let key = hex_decode(user_password_hash)?;
+            let key = derive_key_from_hash(&user_password_hash);
             let nonce = &decoded_data[..12]; // Die ersten 12 Bytes als Nonce verwenden
             let ciphertext = &decoded_data[12..]; // Rest als Ciphertext
 
@@ -41,7 +55,7 @@ pub fn fetch(backend_url: &String, jwt_token: &String, user_password_hash: &Stri
 
             Ok((status_code, Some(json_data)))
         }
-        401 | 500 => Ok((status_code, None)), // Fehler ohne JSON-Verarbeitung
+        401 | 500 => Ok((status_code, None)),
         _ => return Ok((status_code, None))
     }
 }
@@ -54,6 +68,18 @@ fn decrypt_aes256_gcm(key: &[u8], nonce: &[u8], ciphertext: &[u8]) -> Vec<u8> {
 
     // Entschlüsseln
     cipher.decrypt(nonce, ciphertext).unwrap()
+}
+
+fn derive_key_from_hash(password_hash: &str) -> [u8; 32] {
+    // SHA256 aus dem Hash berechnen
+    let mut hasher = Sha256::default();
+    hasher.update(password_hash.as_bytes());
+    let result = hasher.finalize();
+
+    // 32-Byte-Schlüssel zurückgeben
+    let mut key = [0u8; 32];
+    key.copy_from_slice(&result[..32]);
+    key
 }
 
 
@@ -87,11 +113,14 @@ pub fn update(backend_url: &String, jwt_token: &String, user_password_hash: &Str
     // Base64-kodierte Daten erstellen
     let base64_data = STANDARD.encode(&encrypted_data);
 
+    // Base64-Daten in JSON-Struktur einbetten
+    let json_request = serde_json::json!({ "data": base64_data });
+
     // Anfrage senden
     let response = client
         .post(&request_url)
         .header("Authorization", format!("Bearer {}", jwt_token))
-        .body(base64_data)
+        .json(&json_request)
         .send()?;
 
     // HTTP-Statuscode zurückgeben

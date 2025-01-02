@@ -23,6 +23,9 @@ mod menue {
 use log::debug;
 use env_logger;
 
+use std::fs::File;
+use std::io::Write;
+
 //Main Funktion
 fn main() {
 
@@ -54,7 +57,12 @@ fn main() {
         }
     }
 
-    /*//TODO - ONLY FOR TESTING - REMOVE LATER
+    //TODO - ONLY FOR TESTING - Token in Datei schreiben
+    let mut file = File::create("token.txt").unwrap();
+    file.write_all(token.as_bytes()).unwrap();
+
+    /* 
+    //TODO - ONLY FOR TESTING - REMOVE LATER
     let json_data = serde_json::json!([
         {
             "id": "25f556d4-a215-45bb-a13a-9bccee4eb005",
@@ -97,7 +105,8 @@ fn main() {
     match std::fs::write(file_name, json_data.to_string()) {
         Ok(_) => println!("Daten erfolgreich in {} gespeichert.", file_name),
         Err(e) => println!("Fehler beim Schreiben der Datei: {:?}", e),
-    }*/
+    }
+    */
 
     menue::logik::main_menue(&backend_url, &token, &password_hash);
     }
