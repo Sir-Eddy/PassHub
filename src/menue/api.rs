@@ -33,7 +33,7 @@ pub fn fetch(backend_url: &String, jwt_token: &String, user_password_hash: &Stri
 
             // Base64-String aus der JSON-Antwort extrahieren
             let json_response = json_response.unwrap();
-            let base64_data = json_response["data"].as_str().unwrap_or("");
+            let base64_data = json_response["encrypted_data"].as_str().unwrap_or("");
 
             // Base64-Dekodierung
             let decoded_data = STANDARD.decode(&base64_data)?;
@@ -116,7 +116,7 @@ pub fn update(backend_url: &String, jwt_token: &String, user_password_hash: &Str
     let base64_data = STANDARD.encode(&encrypted_data);
 
     // Base64-Daten in JSON-Struktur einbetten
-    let json_request = serde_json::json!({ "data": base64_data });
+    let json_request = serde_json::json!({ "encrypted_data": base64_data });
 
     // Anfrage senden
     let response = client
