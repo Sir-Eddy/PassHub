@@ -1,21 +1,9 @@
-use std::error;
-
 use serde_json::Error;
 use serde_json::Value;
 use serde_json::error::Category;
 use serde::{Serialize, Deserialize};
 use super::{api, view};
 use log::debug;
-
-//TODO - ONLY FOR DEBUGGING - REMOVE LATER
-use std::fs::OpenOptions;
-use std::io::Write;
-
-pub fn log_error(message: &str) {
-    if let Ok(mut file) = OpenOptions::new().create(true).append(true).open("debug.log") {
-        let _ = writeln!(file, "{}", message);
-    }
-}
 
 
 pub fn main_menue(backend_url: &String, token: &String, password_hash: &String) {
@@ -41,9 +29,7 @@ pub fn main_menue(backend_url: &String, token: &String, password_hash: &String) 
             view::unknown_error();
             return;
         }
-        //TODO - ALWAYS RETURNING UNKNOWN ERROR - WHY?
         Err(e) => {
-            log_error(&format!("Unknown error occurred: {:?}", e));
             view::unknown_error();
             return;
         }

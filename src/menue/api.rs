@@ -3,7 +3,6 @@ use base64::engine::general_purpose::STANDARD;
 use base64::Engine;
 use aes_gcm::{Aes256Gcm, Key, Nonce};
 use aes_gcm::aead::{Aead, KeyInit};
-use hex::decode as hex_decode;
 use serde_json::Value;
 use sha2::{Digest, Sha256};
 
@@ -38,6 +37,8 @@ pub fn fetch(backend_url: &String, jwt_token: &String, user_password_hash: &Stri
 
             // Base64-Dekodierung
             let decoded_data = STANDARD.decode(&base64_data)?;
+
+            // Check if minimum length is met for AES-GCM decryption
             if decoded_data.len() < 12 {
                 return Ok((status_code, None));
             }
@@ -94,7 +95,7 @@ pub fn update(backend_url: &String, jwt_token: &String, user_password_hash: &Str
     let json_data = serde_json::to_string(data)?;
 
     // Benutzer-Schlüssel in Bytes umwandeln
-    let key = hex_decode(user_password_hash)?;
+    let key = derive_key_from_hash(&user_password_hash);
 
     // Initialisierung der Verschlüsselung
     let cipher = Aes256Gcm::new(Key::<aes_gcm::aes::Aes256>::from_slice(&key));
