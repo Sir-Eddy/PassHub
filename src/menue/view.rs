@@ -13,6 +13,40 @@ use ratatui::{
 
 use super::logik::{self, get_uris};
 
+pub fn display_data_empty() {
+    // Setup terminal for error screen
+    enable_raw_mode().unwrap();
+    let mut stdout = io::stdout();
+    execute!(stdout, EnterAlternateScreen).unwrap();
+    let backend = CrosstermBackend::new(stdout);
+    let mut terminal = Terminal::new(backend).unwrap();
+
+    loop {
+        terminal.draw(|frame| {
+            let size = frame.area();
+            let block = Block::default()
+                .borders(Borders::ALL)
+                .title("Main Menue");
+
+            let paragraph = Paragraph::new("No data stored. \nPlease press p to add a new password.")
+                .block(block);
+
+            frame.render_widget(paragraph, size);
+        }).unwrap();
+
+        // Wait for user input to dismiss the error screen
+        if let Event::Key(key_event) = event::read().unwrap() {
+            if key_event.kind == KeyEventKind::Press && key_event.code == KeyCode::Enter {
+                break;
+            }
+        }
+    }
+
+    // Restore terminal
+    disable_raw_mode().unwrap();
+    execute!(io::stdout(), LeaveAlternateScreen).unwrap();
+}
+
 
 pub fn display_data(json_data: Value) -> Result<(), Box<dyn Error>> {
     let uris = super::logik::deserialize_json(json_data);

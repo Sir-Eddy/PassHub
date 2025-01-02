@@ -26,6 +26,9 @@ pub fn main_menue(backend_url: &String, token: &String, password_hash: &String) 
         Ok((200, Some(json_data))) => {
             let _ = view::display_data(json_data);
         }
+        Ok((200, None)) => {
+            let _ = view::display_data_empty();
+        }
         Ok((401, _)) => {
             view::invalid_token();
             return;
