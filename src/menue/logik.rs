@@ -29,7 +29,7 @@ pub fn main_menue(backend_url: &String, token: &String, password_hash: &String) 
             view::unknown_error();
             return;
         }
-        Err(e) => {
+        Err(_e) => {
             view::unknown_error();
             return;
         }
