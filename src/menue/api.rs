@@ -86,13 +86,10 @@ fn derive_key_from_hash(password_hash: &str) -> [u8; 32] {
 
 
 
-pub fn update(backend_url: &String, jwt_token: &String, user_password_hash: &String, data: &Value) -> Result<u16, Box<dyn std::error::Error>> {
+pub fn update(backend_url: &String, jwt_token: &String, user_password_hash: &String, json_data: &Value) -> Result<u16, Box<dyn std::error::Error>> {
     // HTTP-Client erstellen
     let client = Client::new();
     let request_url = format!("{}/api/v1/sync/update", backend_url);
-
-    // Daten in JSON-String umwandeln
-    let json_data = serde_json::to_string(data)?;
 
     // Benutzer-Schlüssel in Bytes umwandeln
     let key = derive_key_from_hash(&user_password_hash);
@@ -103,9 +100,12 @@ pub fn update(backend_url: &String, jwt_token: &String, user_password_hash: &Str
     // Nonce generieren (12 zufällige Bytes)
     let nonce = generate_random_nonce();
 
+    // JSON-Daten in einen String serialisieren
+    let json_string = serde_json::to_string(&json_data)?;
+
     // JSON-Daten verschlüsseln
     let ciphertext = cipher
-        .encrypt(Nonce::from_slice(&nonce), json_data.as_bytes())
+        .encrypt(Nonce::from_slice(&nonce), json_string.as_bytes())
         .map_err(|e| format!("Encryption error: {:?}", e))?;
 
     // Nonce und Ciphertext kombinieren
