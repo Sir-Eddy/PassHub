@@ -57,7 +57,6 @@ pub fn get_uris(json_entries:Vec<Entry>)->Result<Vec<String>, Error>{
 }
 
 pub fn deserialize_json(json_data: Value)->Result<Vec<Entry>, Error>{
-    todo!("Error handling noch fertig machen");
     let entries  = serde_json::from_value(json_data);
     match entries {
         Ok(entry_list)=> Ok(entry_list),

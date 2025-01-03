@@ -51,9 +51,8 @@ pub fn display_data_empty() {
 pub fn display_data(json_data: Value) -> Result<(), Box<dyn Error>> {
     let uris = super::logik::deserialize_json(json_data);
     let uris = match uris{
-        Ok(_) => uris.unwrap(),
-        Err(_) => {debug!("There was an error while parsing JSON");
-        let error = std::io::Error::new(ErrorKind::Other, "Error while parsing json!");
+        Ok(e) => e,
+        Err(..) => {debug!("There was an error while parsing JSON");
         panic!()},
     };
 
