@@ -5,8 +5,10 @@ use reqwest::blocking::Client;
 pub fn delete(backend_url: &String, jwt_token: &String)->Result<u16, Box<std::din::error::Error>>{
     let client = Client::new();
 
+    let request_url = format!("{}/api/v1/account/delete", backend_url);
+
     let response = client
-    .get(backend_url)
+    .get(&request_url)
     .header("Authorization", format!("Bearer {}", jwt_token))
     .send()?;
 
@@ -14,6 +16,6 @@ pub fn delete(backend_url: &String, jwt_token: &String)->Result<u16, Box<std::di
     
     match status_code{
         200 => Ok(status_code),
-        401 | 500 => Ok(status_code),
+        400 | 401 | 500 => Ok(status_code),
     }
 }
