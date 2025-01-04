@@ -69,7 +69,11 @@ pub fn display_data(json_data: Value) -> Result<(), Box<dyn Error>> {
 
 
 pub fn display_uris(uris: Vec<String>, mut entries: Vec<Entry>) -> Result<(), Box<dyn Error>> {
-    let mut stateful_list = StatefulList::new(uris);
+    let mut name_list = vec![];
+    for item in &entries{
+        name_list.push(item.name.clone());
+    }
+    let mut stateful_list = StatefulList::new(name_list);
 
     // Initializing the terminal with CrosstermBackend
     let stdout = stdout();
@@ -79,7 +83,8 @@ pub fn display_uris(uris: Vec<String>, mut entries: Vec<Entry>) -> Result<(), Bo
     enable_raw_mode().unwrap();
 
     let mut show_popup = false; // Track whether the popup is displayed
-    let mut selected_index = 0; // Track selected entry index
+    let mut selected_index = 0;
+    let mut popup: Option<PasswordPopup> = None; // Track selected entry index
 
     loop {
         terminal.draw(|f| {
@@ -103,19 +108,18 @@ pub fn display_uris(uris: Vec<String>, mut entries: Vec<Entry>) -> Result<(), Bo
                     .highlight_symbol(">> ");
 
                 f.render_stateful_widget(list, chunks[0], &mut stateful_list.state);
-            } else {
+            } else if let Some(popup) = &popup{
                 // Render the popup
-                let popup = PasswordPopup::from_entry(&entries[selected_index]);
                 let area = Layout::default()
                     .direction(Direction::Vertical)
                     .constraints(vec![
-                        Constraint::Percentage(20),
-                        Constraint::Percentage(80),
+                        Constraint::Percentage(30),
+                        Constraint::Percentage(70),
                     ])
                     .split(f.area());
 
-                f.render_widget(Clear, area[1]); // Clear the background
-                f.render_widget(popup, area[1]); // Render the popup
+                //f.render_widget(Clear, area[1]); // Clear the background
+                popup.render(area[1], f.buffer_mut()); // Render the popup
             }
         })?;
 
@@ -123,18 +127,27 @@ pub fn display_uris(uris: Vec<String>, mut entries: Vec<Entry>) -> Result<(), Bo
         if let event::Event::Key(key) = event::read().unwrap() {
             if key.kind == KeyEventKind::Press {
                 if show_popup {
-                    // Handle popup input
+                    if let Some(popup) = popup.as_mut() {
                     match key.code {
-                        KeyCode::Esc => show_popup = false, // Close the popup
-                        _ => {}
-                    }
+                        KeyCode::Esc => show_popup = false,
+                        KeyCode::Tab => {
+                            popup.edit_mode = match popup.edit_mode{
+                                EditMode::None => EditMode::Uri,
+                                EditMode::Uri => EditMode::Password,
+                                EditMode::Password => EditMode::Note,
+                                EditMode::Note => EditMode::Uri,
+                            };
+                        }
+                        _ => popup.handle_input(key.code),
+                    }}
                 } else {
-                    // Handle list input
+                    
                     match key.code {
                         KeyCode::Down => stateful_list.next(),
                         KeyCode::Up => stateful_list.previous(),
                         KeyCode::Enter => {
                             selected_index = stateful_list.state.selected().unwrap_or(0);
+                            popup = Some(PasswordPopup::from_entry(&mut entries[selected_index]));
                             show_popup = true; // Show the popup
                         }
                         KeyCode::Esc => break, // Exit the loop
@@ -150,29 +163,6 @@ pub fn display_uris(uris: Vec<String>, mut entries: Vec<Entry>) -> Result<(), Bo
     Ok(())
 }
 
-
-//Noch Problem mit dem Frame
-
-
-pub fn edit_password_popup(entry: &mut Entry, key_event: KeyEvent) -> bool {
-    match key_event.code {
-        KeyCode::Char('e') => {
-            todo!();
-            // Edit the first URI
-            if let Some(uri) = entry.login.uris.get_mut(0) {
-                uri.uri = "https://edited-uri.com".to_string();
-            }
-            true
-        }
-        KeyCode::Char('p') => {
-            todo!();
-            // Edit the password
-            entry.login.password = "newpassword".to_string();
-            true
-        }
-        _ => false,
-    }
-}
 
 
 struct StatefulList {
@@ -322,82 +312,136 @@ pub fn unknown_error() {
     execute!(io::stdout(), LeaveAlternateScreen).unwrap();
 }
 
-#[derive(Debug, Default, Setters)]
+#[derive(Debug)]
 struct PasswordPopup<'a> {
-    #[setters(into)]
     title: Line<'a>,
-    #[setters(into)]
-    content: Text<'a>,
     border_style: Style,
     title_style: Style,
     style: Style,
+    edit_mode: EditMode,
+    entry: &'a mut Entry,
 }
 
-impl Widget for PasswordPopup<'_> {
-    fn render(self, area: Rect, buf: &mut Buffer) {
-        Clear.render(area, buf);
-        let block = Block::new()
-        .title(self.title)
-        .title_style(self.title_style)
-        .borders(Borders::ALL)
-        .border_style(self.border_style);
 
-        Paragraph::new(self.content)
-        .wrap(Wrap {trim:true})
-        .style(self.style)
-        .block(block)
-        .render(area, buf);
-    }
+#[derive(Debug)]
+enum EditMode {
+    None,
+    Uri,
+    Password,
+    Note,
 }
 
 impl<'a> PasswordPopup<'a> {
-    pub fn from_entry(entry: &'a Entry) -> Self {
-        // Build the popup content from the `Entry`
-        let mut content = Text::default();
-        content.lines.push(Line::from(vec![
-            Span::raw("ID: "),
-            Span::styled(&entry.id, Style::default().add_modifier(Modifier::BOLD)),
-        ]));
-        content.lines.push(Line::from(vec![
-            Span::raw("Name: "),
-            Span::styled(&entry.name, Style::default().add_modifier(Modifier::BOLD)),
-        ]));
-        if let Some(notes) = &entry.notes {
-            content.lines.push(Line::from(vec![
-                Span::raw("Notes: "),
-                Span::styled(notes, Style::default().add_modifier(Modifier::ITALIC)),
-            ]));
-        }
-        for uri in &entry.login.uris {
-            content.lines.push(Line::from(vec![
-                Span::raw("URI: "),
-                Span::styled(&uri.uri, Style::default()),
-            ]));
-        }
-        content.lines.push(Line::from(vec![
-            Span::raw("Username: "),
-            Span::styled(
-                entry.login.username.as_deref().unwrap_or("(none)"),
-                Style::default(),
-            ),
-        ]));
-        content.lines.push(Line::from(vec![
-            Span::raw("Password: "),
-            Span::styled("********", Style::default().add_modifier(Modifier::DIM)),
-        ]));
-        if let Some(totp) = &entry.login.totp {
-            content.lines.push(Line::from(vec![
-                Span::raw("TOTP: "),
-                Span::styled(totp, Style::default()),
-            ]));
-        }
-
+    pub fn from_entry(entry: &'a mut Entry) -> Self {
         PasswordPopup {
             title: Line::from("Password Entry"),
-            content,
             border_style: Style::default(),
             title_style: Style::default().add_modifier(Modifier::BOLD),
             style: Style::default(),
+            entry,
+            edit_mode: EditMode::None,
+        }
+    }
+
+    pub fn render(&self, area: Rect, buf: &mut Buffer) {
+        let mut content = Text::default();
+        Clear.render(area,buf);
+        content.lines.push(Line::from(vec![
+            Span::raw("URI: "),
+            if matches!(self.edit_mode, EditMode::Uri) {
+                Span::styled(&self.entry.login.uris[0].uri, Style::default().fg(Color::Cyan))
+            } else {
+                Span::raw(&self.entry.login.uris[0].uri)
+            },
+        ]));
+        content.lines.push(Line::from(vec![
+            Span::raw("Password: "),
+            if matches!(self.edit_mode, EditMode::Password) {
+                Span::styled(&self.entry.login.password, Style::default().fg(Color::Cyan))
+            } else {
+                Span::raw("********")
+            },
+        ]));
+        content.lines.push(Line::from(vec![
+            Span::raw("Username: "),
+            Span::styled(
+                self.entry.login.username.as_deref().unwrap_or("(none)"),
+                Style::default(),
+            )
+        ]));
+        
+        content.lines.push(Line::from(vec![
+            Span::raw("totp: "),
+            Span::styled(
+                self.entry.login.totp.as_deref().unwrap_or("(none)"),
+                Style::default(),
+            )
+        ]));
+
+        content.lines.push(Line::from(vec![
+            Span::raw("Notes: "),
+            if matches!(self.edit_mode, EditMode::Note){
+                if self.entry.notes.is_some(){
+                Span::styled(self.entry.notes.as_ref().unwrap(), Style::default().fg(Color::Cyan))}
+                else {
+                    Span::raw("(none)").style(Style::default().fg(Color::Cyan))
+                }
+            } else {
+                Span::raw("(none)")
+            },
+        ]));
+
+        // Render the block and paragraph
+        let block = Block::default()
+            .title(self.title.clone())
+            .borders(Borders::ALL)
+            .border_style(self.border_style);
+
+        Paragraph::new(content)
+            .block(block)
+            .style(self.style)
+            .wrap(Wrap { trim: true })
+            .render(area, buf);
+    }
+
+    pub fn handle_input(&mut self, key: KeyCode) {
+        match self.edit_mode {
+            EditMode::Uri => match key {
+                KeyCode::Char(c) => self.entry.login.uris[0].uri.push(c),
+                KeyCode::Backspace => {
+                    self.entry.login.uris[0].uri.pop();
+                }
+                KeyCode::Tab => self.edit_mode = EditMode::Password,
+                _ => {}
+            },
+            EditMode::Password => match key {
+                KeyCode::Char(c) => self.entry.login.password.push(c),
+                KeyCode::Backspace => {
+                    self.entry.login.password.pop();
+                }
+                KeyCode::Tab => self.edit_mode = EditMode::Note,
+                _ => {}
+            },
+            EditMode::Note => match key {
+                KeyCode::Char(c) => {
+                    if self.entry.notes.is_some(){
+                        self.entry.notes.as_mut().unwrap().push(c)
+                    }
+                    else {
+                        self.entry.notes = Some(String::new());
+                        self.entry.notes.as_mut().unwrap().push(c)
+                    }
+                }
+                KeyCode::Backspace => {
+                    if self.entry.notes.is_some() {
+                        self.entry.notes.as_mut().unwrap().pop();
+                    }
+                    else{}
+                }
+                KeyCode::Tab => self.edit_mode = EditMode::Uri,
+                _ => {}
+            }
+            EditMode::None => {},
         }
     }
 }
