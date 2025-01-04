@@ -6,6 +6,7 @@ use super::{api, view};
 use log::debug;
 
 
+
 pub fn main_menue(backend_url: &String, token: &String, password_hash: &String) {
     // Get the passwords from the backend
     let json_data_result = api::fetch(&backend_url, &token, &password_hash);
@@ -56,10 +57,11 @@ pub fn get_uris(json_entries:Vec<Entry>)->Result<Vec<String>, Error>{
 
 }
 
+
 pub fn deserialize_json(json_data: Value)->Result<Vec<Entry>, Error>{
     let entries  = serde_json::from_value(json_data);
     match entries {
-        Ok(entry_list)=> Ok(entry_list),
+        Ok(entry_list)=> {Ok(entry_list)},
         Err(e) => {
         match e.classify() {
             Category::Io => {debug!("Failed to read or write bytes on an I/O stream");
@@ -76,23 +78,24 @@ pub fn deserialize_json(json_data: Value)->Result<Vec<Entry>, Error>{
 }
 
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct Uri {
-    uri: String,
+    pub uri: String,
 }
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct Login {
-    uris: Vec<Uri>,
-    username: Option<String>,
-    password: String,
-    totp: Option<String>,
+    pub uris: Vec<Uri>,
+    pub username: Option<String>,
+    pub password: String,
+    pub totp: Option<String>,
 }
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct Entry {
-    id: String,
-    name: String,
-    notes: Option<String>,
-    login: Login,
+    pub id: String,
+    pub name: String,
+    pub notes: Option<String>,
+    pub login: Login,
 }
+

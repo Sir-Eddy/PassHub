@@ -1,17 +1,19 @@
 use log::debug;
 use serde_json::Value;
-use std::{error::Error,  io::{self, stdout, ErrorKind}};
+use std::{error::Error,  io::{self, stdout,Error as ioError, ErrorKind, Stdout}, vec};
 use crossterm::{
-    event::{self, Event, KeyCode, KeyEventKind},
+    event::{self, Event, KeyCode, KeyEventKind, KeyEvent},
     execute,
-    terminal::{disable_raw_mode, enable_raw_mode, EnterAlternateScreen, LeaveAlternateScreen},
+    terminal::{self, disable_raw_mode, enable_raw_mode, EnterAlternateScreen, LeaveAlternateScreen},
 };
 use ratatui::{
-    Frame,
-    backend::CrosstermBackend, layout::{Constraint, Direction, Layout, Rect}, prelude::Backend, style::{Color, Modifier, Style}, widgets::{Block, Borders, List, ListDirection, ListItem, ListState, Paragraph}, Terminal
+    backend::CrosstermBackend,buffer::Buffer, layout::{Constraint, Direction, Layout, Rect}, prelude::Backend, style::{Color, Modifier, Style, Stylize}, text::{Line, Text, Span}, widgets::{Block, Borders, Clear, List, ListDirection, ListItem, ListState, Paragraph, Widget, Wrap}, Frame, Terminal
 };
+use derive_setters::Setters;
 
-use super::logik::{self, get_uris};
+
+
+use super::logik::{self, get_uris, Entry};
 
 pub fn display_data_empty() {
     // Setup terminal for error screen
@@ -49,16 +51,16 @@ pub fn display_data_empty() {
 
 
 pub fn display_data(json_data: Value) -> Result<(), Box<dyn Error>> {
-    let uris = super::logik::deserialize_json(json_data);
-    let uris = match uris{
+    let entries = super::logik::deserialize_json(json_data);
+    let entries = match entries{
         Ok(e) => e,
         Err(..) => {debug!("There was an error while parsing JSON");
         panic!()},
     };
-
-    let uris = get_uris(uris);
+    let entries_2 = entries.clone();
+    let uris = get_uris(entries);
     match uris{
-        Ok(vector) => {display_uris(vector)},
+        Ok(vector) => {display_uris(vector, entries_2)},
         Err(e)=> {debug!("Error while parsing JSON!");
     Err(Box::new(e))},
     }
@@ -66,38 +68,154 @@ pub fn display_data(json_data: Value) -> Result<(), Box<dyn Error>> {
 }
 
 
-pub fn display_uris(uris: Vec<String>) -> Result<(), Box<dyn std::error::Error>> {
-    // Convert URIs to ListItem objects for TUI
-    let uri_items: Vec<ListItem> = uris
-        .into_iter()
-        .map(|uri| ListItem::new(format!("Page: {}", uri)))
-        .collect();
+pub fn display_uris(uris: Vec<String>, mut entries: Vec<Entry>) -> Result<(), Box<dyn Error>> {
+    let mut stateful_list = StatefulList::new(uris);
 
-    // Initialize the terminal with CrosstermBackend
+    // Initializing the terminal with CrosstermBackend
     let stdout = stdout();
     let backend = CrosstermBackend::new(stdout);
     let mut terminal = Terminal::new(backend)?;
+    terminal.clear().unwrap();
+    enable_raw_mode().unwrap();
 
-    // Create the List widget
+    let mut show_popup = false; // Track whether the popup is displayed
+    let mut selected_index = 0; // Track selected entry index
+
     loop {
-        
-    let list = List::new(uri_items)
-        .block(Block::default().title("Password URIs").borders(ratatui::widgets::Borders::ALL))
-        .highlight_style(Style::default().bg(Color::Blue))
-        .highlight_symbol(">>");
+        terminal.draw(|f| {
+            let size = f.area();
+            let chunks = Layout::default()
+                .direction(Direction::Vertical)
+                .constraints([Constraint::Percentage(100)].as_ref())
+                .split(size);
 
-    // Render the List in the terminal
-    terminal.draw(|f| {
-        let size = f.area();
-        f.render_widget(list, size);
-    })?;
+            // Render the list if no popup is active
+            if !show_popup {
+                let list_items: Vec<ListItem> = stateful_list
+                    .items
+                    .iter()
+                    .map(|i| ListItem::new(i.as_str()))
+                    .collect();
 
-    //Here belongs some Code for user input handling
-    todo!();
+                let list = List::new(list_items)
+                    .block(ratatui::widgets::Block::default().borders(ratatui::widgets::Borders::ALL))
+                    .highlight_style(Style::default().fg(Color::Yellow))
+                    .highlight_symbol(">> ");
+
+                f.render_stateful_widget(list, chunks[0], &mut stateful_list.state);
+            } else {
+                // Render the popup
+                let popup = PasswordPopup::from_entry(&entries[selected_index]);
+                let area = Layout::default()
+                    .direction(Direction::Vertical)
+                    .constraints(vec![
+                        Constraint::Percentage(20),
+                        Constraint::Percentage(80),
+                    ])
+                    .split(f.area());
+
+                f.render_widget(Clear, area[1]); // Clear the background
+                f.render_widget(popup, area[1]); // Render the popup
+            }
+        })?;
+
+        // Code for user input handling
+        if let event::Event::Key(key) = event::read().unwrap() {
+            if key.kind == KeyEventKind::Press {
+                if show_popup {
+                    // Handle popup input
+                    match key.code {
+                        KeyCode::Esc => show_popup = false, // Close the popup
+                        _ => {}
+                    }
+                } else {
+                    // Handle list input
+                    match key.code {
+                        KeyCode::Down => stateful_list.next(),
+                        KeyCode::Up => stateful_list.previous(),
+                        KeyCode::Enter => {
+                            selected_index = stateful_list.state.selected().unwrap_or(0);
+                            show_popup = true; // Show the popup
+                        }
+                        KeyCode::Esc => break, // Exit the loop
+                        _ => {}
+                    }
+                }
+            }
+        }
     }
 
+    disable_raw_mode().unwrap();
+    terminal.clear()?;
+    Ok(())
 }
 
+
+//Noch Problem mit dem Frame
+
+
+pub fn edit_password_popup(entry: &mut Entry, key_event: KeyEvent) -> bool {
+    match key_event.code {
+        KeyCode::Char('e') => {
+            todo!();
+            // Edit the first URI
+            if let Some(uri) = entry.login.uris.get_mut(0) {
+                uri.uri = "https://edited-uri.com".to_string();
+            }
+            true
+        }
+        KeyCode::Char('p') => {
+            todo!();
+            // Edit the password
+            entry.login.password = "newpassword".to_string();
+            true
+        }
+        _ => false,
+    }
+}
+
+
+struct StatefulList {
+    state: ListState,
+    items: Vec<String>,
+}
+
+impl StatefulList {
+    fn new(items: Vec<String>) -> StatefulList {
+        StatefulList {
+            state: ListState::default(),
+            items,
+        }
+    }
+
+    fn next(&mut self) {
+        let i = match self.state.selected() {
+            Some(i) => {
+                if i >= self.items.len() - 1 {
+                    0
+                } else {
+                    i + 1
+                }
+            }
+            None => 0,
+        };
+        self.state.select(Some(i));
+    }
+
+    fn previous(&mut self) {
+        let i = match self.state.selected() {
+            Some(i) => {
+                if i == 0 {
+                    self.items.len() - 1
+                } else {
+                    i - 1
+                }
+            }
+            None => 0,
+        };
+        self.state.select(Some(i));
+    }
+}
 
 
 
@@ -202,4 +320,84 @@ pub fn unknown_error() {
     // Restore terminal
     disable_raw_mode().unwrap();
     execute!(io::stdout(), LeaveAlternateScreen).unwrap();
+}
+
+#[derive(Debug, Default, Setters)]
+struct PasswordPopup<'a> {
+    #[setters(into)]
+    title: Line<'a>,
+    #[setters(into)]
+    content: Text<'a>,
+    border_style: Style,
+    title_style: Style,
+    style: Style,
+}
+
+impl Widget for PasswordPopup<'_> {
+    fn render(self, area: Rect, buf: &mut Buffer) {
+        Clear.render(area, buf);
+        let block = Block::new()
+        .title(self.title)
+        .title_style(self.title_style)
+        .borders(Borders::ALL)
+        .border_style(self.border_style);
+
+        Paragraph::new(self.content)
+        .wrap(Wrap {trim:true})
+        .style(self.style)
+        .block(block)
+        .render(area, buf);
+    }
+}
+
+impl<'a> PasswordPopup<'a> {
+    pub fn from_entry(entry: &'a Entry) -> Self {
+        // Build the popup content from the `Entry`
+        let mut content = Text::default();
+        content.lines.push(Line::from(vec![
+            Span::raw("ID: "),
+            Span::styled(&entry.id, Style::default().add_modifier(Modifier::BOLD)),
+        ]));
+        content.lines.push(Line::from(vec![
+            Span::raw("Name: "),
+            Span::styled(&entry.name, Style::default().add_modifier(Modifier::BOLD)),
+        ]));
+        if let Some(notes) = &entry.notes {
+            content.lines.push(Line::from(vec![
+                Span::raw("Notes: "),
+                Span::styled(notes, Style::default().add_modifier(Modifier::ITALIC)),
+            ]));
+        }
+        for uri in &entry.login.uris {
+            content.lines.push(Line::from(vec![
+                Span::raw("URI: "),
+                Span::styled(&uri.uri, Style::default()),
+            ]));
+        }
+        content.lines.push(Line::from(vec![
+            Span::raw("Username: "),
+            Span::styled(
+                entry.login.username.as_deref().unwrap_or("(none)"),
+                Style::default(),
+            ),
+        ]));
+        content.lines.push(Line::from(vec![
+            Span::raw("Password: "),
+            Span::styled("********", Style::default().add_modifier(Modifier::DIM)),
+        ]));
+        if let Some(totp) = &entry.login.totp {
+            content.lines.push(Line::from(vec![
+                Span::raw("TOTP: "),
+                Span::styled(totp, Style::default()),
+            ]));
+        }
+
+        PasswordPopup {
+            title: Line::from("Password Entry"),
+            content,
+            border_style: Style::default(),
+            title_style: Style::default().add_modifier(Modifier::BOLD),
+            style: Style::default(),
+        }
+    }
 }
