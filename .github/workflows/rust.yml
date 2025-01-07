@@ -21,3 +21,8 @@ jobs:
       run: cargo build --verbose --release
 #    - name: Run tests
 #      run: cargo test --verbose
+    - name: Upload binary artefact
+      uses: actions/upload-artifact@v3
+      with:
+        name: passhub_for_rspass
+        path: target/release/passhub_for_rspass
