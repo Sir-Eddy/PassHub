@@ -13,7 +13,7 @@ use derive_setters::Setters;
 
 
 
-use super::logik::{self, get_uris, Entry};
+use super::logik::{self, get_uris, serialize_json, Entry};
 
 pub fn display_data_empty() {
     // Setup terminal for error screen
@@ -50,7 +50,7 @@ pub fn display_data_empty() {
 }
 
 
-pub fn display_data(json_data: Value) -> Result<(), Box<dyn Error>> {
+pub fn display_data(json_data: Value) -> Result<Vec<Entry>, Box<dyn Error>> {
     let entries = super::logik::deserialize_json(json_data);
     let entries = match entries{
         Ok(e) => e,
@@ -64,11 +64,12 @@ pub fn display_data(json_data: Value) -> Result<(), Box<dyn Error>> {
         Err(e)=> {debug!("Error while parsing JSON!");
     Err(Box::new(e))},
     }
+    
 
 }
 
 
-pub fn display_uris(uris: Vec<String>, mut entries: Vec<Entry>) -> Result<(), Box<dyn Error>> {
+pub fn display_uris(uris: Vec<String>,mut entries: Vec<Entry>) -> Result<Vec<Entry>, Box<dyn Error>> {
     let mut name_list = vec![];
     for item in &entries{
         name_list.push(item.name.clone());
@@ -157,12 +158,16 @@ pub fn display_uris(uris: Vec<String>, mut entries: Vec<Entry>) -> Result<(), Bo
             }
         }
     }
-
+    
     disable_raw_mode().unwrap();
     terminal.clear()?;
-    Ok(())
+    
+    Ok(entries)
 }
 
+pub fn check_regex(){
+    todo!();
+}
 
 
 struct StatefulList {
@@ -278,6 +283,42 @@ pub fn database_error() {
     execute!(io::stdout(), LeaveAlternateScreen).unwrap();
 }
 
+pub fn update_error(code: i16) {
+    
+    enable_raw_mode().unwrap();
+    let mut stdout = io::stdout();
+    execute!(stdout, EnterAlternateScreen).unwrap();
+    let backend = CrosstermBackend::new(stdout);
+    let mut terminal = Terminal::new(backend).unwrap();
+
+    loop {
+        terminal.draw(|frame|{
+            let size = frame.area();
+            let block = Block::default()
+                .borders(Borders::ALL)
+                .title("Error");
+            let paragraph = match code {
+                401 => Paragraph::new("JWT Token is invalid!")
+                .block(block),
+                500 => Paragraph::new("Database Error or JWT Extraction Error!")
+                .block(block),
+                _ => {Paragraph::new("Unknown Error!")
+                    .block(block)},
+            };
+            frame.render_widget(paragraph, size);
+
+        }).unwrap();
+        if let Event::Key(key_event) = event::read().unwrap() {
+            if key_event.kind == KeyEventKind::Press && key_event.code == KeyCode::Enter {
+                break;
+            }
+        }
+
+    }
+    disable_raw_mode().unwrap();
+    execute!(io::stdout(), LeaveAlternateScreen).unwrap();
+}
+
 pub fn unknown_error() {
     // Setup terminal for error screen
     enable_raw_mode().unwrap();
@@ -306,6 +347,37 @@ pub fn unknown_error() {
             }
         }
     }
+    disable_raw_mode().unwrap();
+    execute!(io::stdout(), LeaveAlternateScreen).unwrap();
+}  
+
+pub fn serialization_error() {
+    enable_raw_mode().unwrap();
+    let mut stdout = io::stdout();
+    execute!(stdout, EnterAlternateScreen).unwrap();
+    let backend = CrosstermBackend::new(stdout);
+    let mut terminal = Terminal::new(backend).unwrap();
+
+    loop {
+        terminal.draw(|frame|{
+            let size = frame.area();
+            let block = Block::default()
+                .borders(Borders::ALL)
+                .title("Error");
+            let paragraph = Paragraph::new("Serialization Error!")
+                    .block(block);
+            
+            frame.render_widget(paragraph, size);
+
+        }).unwrap();
+        if let Event::Key(key_event) = event::read().unwrap() {
+            if key_event.kind == KeyEventKind::Press && key_event.code == KeyCode::Enter {
+                break;
+            }
+        }
+
+    }
+
 
     // Restore terminal
     disable_raw_mode().unwrap();
