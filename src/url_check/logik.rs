@@ -1,5 +1,5 @@
-use super::view;
 use super::api;
+use super::view;
 
 use directories::ProjectDirs;
 use std::fs;
@@ -17,11 +17,11 @@ pub fn get_backend_url() -> String {
             backend_url = None; // Zurücksetzen, um neue Eingabe zu erzwingen
         }
     }
-    
+
     loop {
         if backend_url.is_none() {
             create_file(); // Erstelle die Datei, falls sie nicht existiert
-            // Eingabe-Schleife für die URL
+                           // Eingabe-Schleife für die URL
             loop {
                 let temp_url: String = view::ask_for_url();
                 if Url::parse(&temp_url).is_ok() {
@@ -46,7 +46,6 @@ pub fn get_backend_url() -> String {
     }
 }
 
-
 //Gibt URL zurück, falls sie lokal vorhanden ist. Ansonsten None
 fn is_url_in_storage() -> Option<String> {
     // Hol das Projektverzeichnis
@@ -58,14 +57,14 @@ fn is_url_in_storage() -> Option<String> {
         if config_file.exists() {
             let mut file = fs::File::open(&config_file).expect("Fehler beim Öffnen der Datei");
             let mut url = String::new();
-            file.read_to_string(&mut url).expect("Fehler beim Lesen der Datei");
+            file.read_to_string(&mut url)
+                .expect("Fehler beim Lesen der Datei");
 
             // Entferne Whitespaces und prüfe, ob eine URL vorhanden ist
             let trimmed_url = url.trim();
             if !trimmed_url.is_empty() {
                 return Some(trimmed_url.to_string());
             }
-
         }
     }
     None
@@ -93,6 +92,7 @@ fn save_backend_url(url: &str) {
 
         // Schreibe die URL in die Datei
         let mut file = fs::File::create(&config_file).expect("Fehler beim Erstellen der Datei");
-        file.write_all(url.as_bytes()).expect("Fehler beim Schreiben in die Datei");
+        file.write_all(url.as_bytes())
+            .expect("Fehler beim Schreiben in die Datei");
     }
 }

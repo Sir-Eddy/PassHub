@@ -1,8 +1,8 @@
+use log::debug;
 use reqwest::blocking::Client;
 use reqwest::StatusCode;
-use std::time::Duration;
 use std::thread::sleep;
-use log::debug;
+use std::time::Duration;
 
 pub fn check_health(base_url: &str) -> bool {
     // Erstelle die vollständige URL für die Health-Route

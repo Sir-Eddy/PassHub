@@ -1,13 +1,16 @@
-use reqwest::blocking::Client;
+use aes_gcm::aead::{Aead, KeyInit};
+use aes_gcm::{Aes256Gcm, Key, Nonce};
 use base64::engine::general_purpose::STANDARD;
 use base64::Engine;
-use aes_gcm::{Aes256Gcm, Key, Nonce};
-use aes_gcm::aead::{Aead, KeyInit};
+use reqwest::blocking::Client;
 use serde_json::Value;
 use sha2::{Digest, Sha256};
 
-
-pub fn fetch(backend_url: &String, jwt_token: &String, user_password_hash: &String,) -> Result<(u16, Option<Value>), Box<dyn std::error::Error>> {
+pub fn fetch(
+    backend_url: &String,
+    jwt_token: &String,
+    user_password_hash: &String,
+) -> Result<(u16, Option<Value>), Box<dyn std::error::Error>> {
     // HTTP-Client erstellen
     let client = Client::new();
     let request_url = format!("{}/api/v1/sync/fetch", backend_url);
@@ -22,7 +25,6 @@ pub fn fetch(backend_url: &String, jwt_token: &String, user_password_hash: &Stri
 
     match status_code {
         200 => {
-
             // Prüfen, ob eine JSON-Antwort vorhanden ist
             let json_response: Option<Value> = response.json().ok();
 
@@ -57,11 +59,9 @@ pub fn fetch(backend_url: &String, jwt_token: &String, user_password_hash: &Stri
             Ok((status_code, Some(json_data)))
         }
         401 | 500 => Ok((status_code, None)),
-        _ => return Ok((status_code, None))
+        _ => return Ok((status_code, None)),
     }
 }
-
-
 
 fn decrypt_aes256_gcm(key: &[u8], nonce: &[u8], ciphertext: &[u8]) -> Vec<u8> {
     // AES-GCM initialisieren
@@ -84,9 +84,12 @@ fn derive_key_from_hash(password_hash: &str) -> [u8; 32] {
     key
 }
 
-
-
-pub fn update(backend_url: &String, jwt_token: &String, user_password_hash: &String, json_data: &Value) -> Result<u16, Box<dyn std::error::Error>> {
+pub fn update(
+    backend_url: &String,
+    jwt_token: &String,
+    user_password_hash: &String,
+    json_data: &Value,
+) -> Result<u16, Box<dyn std::error::Error>> {
     // HTTP-Client erstellen
     let client = Client::new();
     let request_url = format!("{}/api/v1/sync/update", backend_url);

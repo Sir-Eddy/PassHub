@@ -1,3 +1,4 @@
+use super::logik;
 use crossterm::{
     event::{self, Event, KeyCode, KeyEventKind},
     execute,
@@ -6,12 +7,11 @@ use crossterm::{
 use ratatui::{
     backend::CrosstermBackend,
     layout::{Alignment, Constraint, Direction, Layout},
-    widgets::{Block, Borders, Paragraph},
     style::{Color, Modifier, Style},
+    widgets::{Block, Borders, Paragraph},
     Terminal,
 };
 use std::io::{self, stdout};
-use super::logik;
 
 pub fn draw_register_screen() -> (String, String) {
     // Terminal initialisieren
@@ -133,12 +133,14 @@ pub fn draw_register_screen() -> (String, String) {
     // Terminal bereinigen
     terminal.clear().unwrap();
     disable_raw_mode().unwrap();
-    execute!(terminal.backend_mut(), crossterm::terminal::LeaveAlternateScreen).unwrap();
+    execute!(
+        terminal.backend_mut(),
+        crossterm::terminal::LeaveAlternateScreen
+    )
+    .unwrap();
 
     (email, password)
 }
-
-
 
 pub fn error_argon2_fail() {
     // Setup terminal for error screen
@@ -183,17 +185,17 @@ pub fn error_network() {
     let mut terminal = Terminal::new(backend).unwrap();
 
     loop {
-        terminal.draw(|frame| {
-            let size = frame.area();
-            let block = Block::default()
-                .borders(Borders::ALL)
-                .title("Error");
+        terminal
+            .draw(|frame| {
+                let size = frame.area();
+                let block = Block::default().borders(Borders::ALL).title("Error");
 
-            let paragraph = Paragraph::new("Network Error. \n Press Enter to try again.")
-                .block(block);
+                let paragraph =
+                    Paragraph::new("Network Error. \n Press Enter to try again.").block(block);
 
-            frame.render_widget(paragraph, size);
-        }).unwrap();
+                frame.render_widget(paragraph, size);
+            })
+            .unwrap();
 
         // Wait for user input to dismiss the error screen
         if let Event::Key(key_event) = event::read().unwrap() {
@@ -217,17 +219,17 @@ pub fn error_bad_request() {
     let mut terminal = Terminal::new(backend).unwrap();
 
     loop {
-        terminal.draw(|frame| {
-            let size = frame.area();
-            let block = Block::default()
-                .borders(Borders::ALL)
-                .title("Error");
+        terminal
+            .draw(|frame| {
+                let size = frame.area();
+                let block = Block::default().borders(Borders::ALL).title("Error");
 
-            let paragraph = Paragraph::new("Invalid Payload. \n Press Enter to try again.")
-                .block(block);
+                let paragraph =
+                    Paragraph::new("Invalid Payload. \n Press Enter to try again.").block(block);
 
-            frame.render_widget(paragraph, size);
-        }).unwrap();
+                frame.render_widget(paragraph, size);
+            })
+            .unwrap();
 
         // Wait for user input to dismiss the error screen
         if let Event::Key(key_event) = event::read().unwrap() {
@@ -251,17 +253,17 @@ pub fn error_unknown() {
     let mut terminal = Terminal::new(backend).unwrap();
 
     loop {
-        terminal.draw(|frame| {
-            let size = frame.area();
-            let block = Block::default()
-                .borders(Borders::ALL)
-                .title("Error");
+        terminal
+            .draw(|frame| {
+                let size = frame.area();
+                let block = Block::default().borders(Borders::ALL).title("Error");
 
-            let paragraph = Paragraph::new("Unknown Error. \n Press Enter to try again.")
-                .block(block);
+                let paragraph =
+                    Paragraph::new("Unknown Error. \n Press Enter to try again.").block(block);
 
-            frame.render_widget(paragraph, size);
-        }).unwrap();
+                frame.render_widget(paragraph, size);
+            })
+            .unwrap();
 
         // Wait for user input to dismiss the error screen
         if let Event::Key(key_event) = event::read().unwrap() {
