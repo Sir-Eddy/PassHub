@@ -11,18 +11,30 @@ env:
   CARGO_TERM_COLOR: always
 
 jobs:
-  build:
-
+  build-linux:
     runs-on: ubuntu-latest
-
     steps:
     - uses: actions/checkout@v4
-    - name: Build
+    - name: Build for Linux
       run: cargo build --verbose --release
-#    - name: Run tests
-#      run: cargo test --verbose
-    - name: Upload binary artefact
+    - name: Upload Linux binary artefact
       uses: actions/upload-artifact@v3
       with:
-        name: passhub_for_rspass
+        name: passhub_for_rspass_linux
         path: target/release/passhub_for_rspass
+
+  build-windows:
+    runs-on: windows-latest
+    steps:
+    - uses: actions/checkout@v4
+    - name: Install Rust
+      run: rustup install stable
+    - name: Set up MSVC toolchain
+      run: rustup default stable-x86_64-pc-windows-msvc
+    - name: Build for Windows
+      run: cargo build --verbose --release
+    - name: Upload Windows binary artefact
+      uses: actions/upload-artifact@v3
+      with:
+        name: passhub_for_rspass_windows
+        path: target/release/passhub_for_rspass.exe
