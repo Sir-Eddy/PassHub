@@ -6,13 +6,35 @@ use super::{api, view};
 use log::debug;
 
 
+
+
 pub fn main_menue(backend_url: &String, token: &String, password_hash: &String) {
     // Get the passwords from the backend
     let json_data_result = api::fetch(&backend_url, &token, &password_hash);
 
     match json_data_result {
         Ok((200, Some(json_data))) => {
-            let _ = view::display_data(json_data);
+            let entries = view::display_data(json_data);
+            let json_string = serialize_json(&entries.unwrap()).unwrap();
+            let json_string = json_string.as_str();
+            let json_value: Value = match serde_json::from_str(json_string)
+            {
+                Ok(value) => value,
+                Err(..) => panic!(),
+            };
+            let res =  api::update(backend_url, token, password_hash, &json_value);
+            match res{
+                Ok(200) => return,
+                Ok(401) => {debug!("JWT Token is invalid"); view::update_error(401);},
+                Ok(500) => {debug!("Database Error or JWT Extraction Error"); view::update_error(500);},
+                Err(..) => {debug!("Error happened");
+                view::unknown_error();
+            }
+                _ => {debug!("Error happened");
+                view::unknown_error();
+            }
+            };
+            //todo!("Error logic in api::update und anderem");
         }
         Ok((200, None)) => {
             let _ = view::display_data_empty();
@@ -36,6 +58,7 @@ pub fn main_menue(backend_url: &String, token: &String, password_hash: &String) 
     }
 }
 
+
 pub fn add_password(){
     todo!();
 }
@@ -56,11 +79,11 @@ pub fn get_uris(json_entries:Vec<Entry>)->Result<Vec<String>, Error>{
 
 }
 
+
 pub fn deserialize_json(json_data: Value)->Result<Vec<Entry>, Error>{
-    todo!("Error handling noch fertig machen");
     let entries  = serde_json::from_value(json_data);
     match entries {
-        Ok(entry_list)=> Ok(entry_list),
+        Ok(entry_list)=> {Ok(entry_list)},
         Err(e) => {
         match e.classify() {
             Category::Io => {debug!("Failed to read or write bytes on an I/O stream");
@@ -76,24 +99,35 @@ pub fn deserialize_json(json_data: Value)->Result<Vec<Entry>, Error>{
     }
 }
 
+pub fn serialize_json(entries: &Vec<Entry>)-> Option<String>{
+    let json = match serde_json::to_string(&entries){
+        Ok(value) => value,
+        Err(_) => {view::serialization_error();
+        return None;
+        },
+    };
+    return Some(json);
+}
 
-#[derive(Debug, Serialize, Deserialize)]
+
+#[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct Uri {
-    uri: String,
+    pub uri: String,
 }
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct Login {
-    uris: Vec<Uri>,
-    username: Option<String>,
-    password: String,
-    totp: Option<String>,
+    pub uris: Vec<Uri>,
+    pub username: Option<String>,
+    pub password: String,
+    pub totp: Option<String>,
 }
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct Entry {
-    id: String,
-    name: String,
-    notes: Option<String>,
-    login: Login,
+    pub id: String,
+    pub name: String,
+    pub notes: Option<String>,
+    pub login: Login,
 }
+
