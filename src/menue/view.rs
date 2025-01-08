@@ -69,13 +69,8 @@ pub fn display_data(json_data: Value) -> Result<Vec<Entry>, Box<dyn Error>> {
 }
 
 pub fn add_entry() -> Entry {
-    enable_raw_mode().unwrap();
-    let stdout = io::stdout();
-    let backend = CrosstermBackend::new(stdout);
-    let mut terminal = Terminal::new(backend).unwrap();
-    terminal.clear().unwrap();
 
-    let mut entry = Entry {
+    let mut new_entry = Entry {
         id: String::new(),
         name: String::new(),
         notes: None,
@@ -87,74 +82,105 @@ pub fn add_entry() -> Entry {
         },
     };
 
-    let mut edit_mode = EditMode::Uri; // Start editing URIs
+    let mut popup_fields = StatefulList::new(vec![
+        "Name".to_string(),
+        "URI".to_string(),
+        "Username".to_string(),
+        "Password".to_string(),
+        "Notes".to_string(),
+    ]);
+
+    let stdout = io::stdout();
+    let backend = CrosstermBackend::new(stdout);
+    let mut terminal = Terminal::new(backend).unwrap();
+    terminal.clear().unwrap();
+
     loop {
+        // Render the popup
         terminal.draw(|f| {
             let size = f.area();
-            let block = Block::default().title("New Entry").borders(Borders::ALL);
+            let chunks = Layout::default()
+                .direction(Direction::Vertical)
+                .constraints([Constraint::Percentage(70), Constraint::Percentage(30)].as_ref())
+                .split(size);
 
-            let content = match edit_mode {
-                EditMode::Uri => format!("URI: {}", entry.login.uris[0].uri),
-                EditMode::Password => format!("Password: {}", entry.login.password),
-                EditMode::Note => format!("Notes: {}", entry.notes.as_deref().unwrap_or("")),
-                EditMode::Username => format!("Username: {}", entry.login.username.as_deref().unwrap_or("")),
-                EditMode::Name => format!("Name: {}", entry.name),
-                _ => String::new(),
+            // Render the popup fields
+            let list_items: Vec<ListItem> = popup_fields
+                .items
+                .iter()
+                .map(|field| ListItem::new(field.clone()))
+                .collect();
+
+            let list = List::new(list_items)
+                .block(Block::default().borders(Borders::ALL).title("Add New Entry"))
+                .highlight_style(Style::default().fg(Color::Yellow))
+                .highlight_symbol(">> ");
+
+            f.render_stateful_widget(list, chunks[0], &mut popup_fields.state);
+
+            // Render the content of the selected field for editing
+            let field_content = match popup_fields.state.selected() {
+                Some(0) => &new_entry.name,
+                Some(1) => &new_entry.login.uris[0].uri,
+                Some(2) => new_entry.login.username.as_deref().unwrap_or("(none)"),
+                Some(3) => &new_entry.login.password,
+                Some(4) => new_entry.notes.as_deref().unwrap_or("(none)"),
+                _ => "",
             };
 
-            let paragraph = Paragraph::new(content).block(block);
-            f.render_widget(paragraph, size);
+            let paragraph = Paragraph::new(field_content)
+                .block(Block::default().borders(Borders::ALL).title("Field Content"));
+
+            f.render_widget(paragraph, chunks[1]);
         }).unwrap();
 
+        // Handle user input in the popup
         if let Event::Key(key) = event::read().unwrap() {
             match key.code {
-                KeyCode::Enter => break, // Finish editing
-                KeyCode::Tab => {
-                    // Switch editing modes
-                    edit_mode = match edit_mode {
-                        EditMode::Uri => EditMode::Password,
-                        EditMode::Password => EditMode::Note,
-                        EditMode::Note => EditMode::Username,
-                        EditMode::Username => EditMode::Name,
-                        EditMode::Name => EditMode::Uri,
-                        _ => EditMode::Uri,
-                    };
+                KeyCode::Esc => break, // Exit the popup
+                KeyCode::Up => popup_fields.previous(),
+                KeyCode::Down => popup_fields.next(),
+                KeyCode::Enter => break, // Finalize entry
+                KeyCode::Char(c) => {
+                    // Edit the selected field
+                    match popup_fields.state.selected() {
+                        Some(0) => new_entry.name.push(c),
+                        Some(1) => new_entry.login.uris[0].uri.push(c),
+                        Some(2) => {
+                            if new_entry.login.username.is_none() {
+                                new_entry.login.username = Some(String::new());
+                            }
+                            new_entry.login.username.as_mut().unwrap().push(c);
+                        }
+                        Some(3) => new_entry.login.password.push(c),
+                        Some(4) => {
+                            if new_entry.notes.is_none() {
+                                new_entry.notes = Some(String::new());
+                            }
+                            new_entry.notes.as_mut().unwrap().push(c);
+                        }
+                        _ => {}
+                    }
                 }
-                KeyCode::Char(c) => match edit_mode {
-                    EditMode::Uri => entry.login.uris[0].uri.push(c),
-                    EditMode::Password => entry.login.password.push(c),
-                    EditMode::Note => {
-                        if entry.notes.is_none() {
-                            entry.notes = Some(String::new());
+                KeyCode::Backspace => {
+                    // Handle deletion of characters in the selected field
+                    match popup_fields.state.selected() {
+                        Some(0) => { new_entry.name.pop(); }
+                        Some(1) => { new_entry.login.uris[0].uri.pop(); }
+                        Some(2) => {
+                            if let Some(username) = new_entry.login.username.as_mut() {
+                                username.pop();
+                            }
                         }
-                        entry.notes.as_mut().unwrap().push(c);
-                    }
-                    EditMode::Username => {
-                        if entry.login.username.is_none() {
-                            entry.login.username = Some(String::new());
+                        Some(3) => { new_entry.login.password.pop(); }
+                        Some(4) => {
+                            if let Some(notes) = new_entry.notes.as_mut() {
+                                notes.pop();
+                            }
                         }
-                        entry.login.username.as_mut().unwrap().push(c);
+                        _ => {}
                     }
-                    EditMode::Name => entry.name.push(c),
-                    _ => {}
-                },
-                KeyCode::Backspace => match edit_mode {
-                    EditMode::Uri => { entry.login.uris[0].uri.pop(); }
-                    EditMode::Password => { entry.login.password.pop(); }
-                    EditMode::Note => {
-                        if let Some(notes) = &mut entry.notes {
-                            notes.pop();
-                        }
-                    }
-                    EditMode::Username => {
-                        if let Some(username) = &mut entry.login.username {
-                            username.pop();
-                        }
-                    }
-                    EditMode::Name => {entry.name.pop();}
-                    _ => {}
-                },
-                KeyCode::Esc => break, // Exit without saving
+                }
                 _ => {}
             }
         }
@@ -162,8 +188,9 @@ pub fn add_entry() -> Entry {
 
     terminal.clear().unwrap();
 
-    entry
-}
+    new_entry
+}                         
+
 
 
 
@@ -249,12 +276,23 @@ pub fn display_uris(mut entries: Vec<Entry>) -> Result<Vec<Entry>, Box<dyn Error
                             show_popup = true; // Show the popup
                         }
                         KeyCode::Char('+') => {
+                            terminal.clear()?;
                             let new_entry: Entry = add_entry();
                             let new_entry_name = new_entry.name.clone();
                             popup = None;
                             entries.push(new_entry);
                             stateful_list.items.push(new_entry_name)
                         },
+                        KeyCode::Delete => {
+                            match stateful_list.get_selected_index() {
+                                Some(index) => {
+                                    popup = None;
+                                    stateful_list.delete_selected();
+                                    entries.remove(index);
+                                },
+                                None => {}
+                            };
+                        }
                         KeyCode::Esc => break, // Exit the loop
                         _ => {}
                     }
@@ -282,6 +320,13 @@ impl StatefulList {
             state: ListState::default(),
             items,
         }
+    }
+    fn get_selected_index(& self) -> Option<usize> {
+        let index = match self.state.selected() {
+            Some(index) => {Some(index)},
+            None => {None}
+        };
+        index
     }
 
     fn next(&mut self) {
@@ -311,6 +356,16 @@ impl StatefulList {
         };
         self.state.select(Some(i));
     }
+
+    fn delete_selected(&mut self) {
+        let i = match self.state.selected() {
+            Some(i) => {
+                self.items.remove(i);
+            }
+            None => {},   
+            };
+    }
+    
 }
 
 
@@ -539,7 +594,7 @@ impl<'a> PasswordPopup<'a> {
         ]));
         content.lines.push(Line::from(vec![
             Span::raw("Username: "),
-            if matches!(self.edit_mode, EditMode::Note){
+            if matches!(self.edit_mode, EditMode::Username){
                 if self.entry.notes.is_some(){
                 Span::styled(self.entry.notes.as_ref().unwrap(), Style::default().fg(Color::Cyan))}
                 else {
