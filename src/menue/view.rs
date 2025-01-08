@@ -13,7 +13,7 @@ use derive_setters::Setters;
 
 
 
-use super::logik::{self, get_uris, serialize_json, Entry};
+use super::logik::{self, get_uris, serialize_json, Entry, Uri, Login};
 
 pub fn display_data_empty() {
     // Setup terminal for error screen
@@ -60,7 +60,7 @@ pub fn display_data(json_data: Value) -> Result<Vec<Entry>, Box<dyn Error>> {
     let entries_2 = entries.clone();
     let uris = get_uris(entries);
     match uris{
-        Ok(vector) => {display_uris(vector, entries_2)},
+        Ok(vector) => {display_uris( entries_2)},
         Err(e)=> {debug!("Error while parsing JSON!");
     Err(Box::new(e))},
     }
@@ -68,12 +68,107 @@ pub fn display_data(json_data: Value) -> Result<Vec<Entry>, Box<dyn Error>> {
 
 }
 
+pub fn add_entry() -> Entry {
+    enable_raw_mode().unwrap();
+    let stdout = io::stdout();
+    let backend = CrosstermBackend::new(stdout);
+    let mut terminal = Terminal::new(backend).unwrap();
+    terminal.clear().unwrap();
 
-pub fn display_uris(uris: Vec<String>,mut entries: Vec<Entry>) -> Result<Vec<Entry>, Box<dyn Error>> {
-    let mut name_list = vec![];
-    for item in &entries{
-        name_list.push(item.name.clone());
+    let mut entry = Entry {
+        id: String::new(),
+        name: String::new(),
+        notes: None,
+        login: Login {
+            uris: vec![Uri { uri: String::new() }],
+            username: None,
+            password: String::new(),
+            totp: None,
+        },
+    };
+
+    let mut edit_mode = EditMode::Uri; // Start editing URIs
+    loop {
+        terminal.draw(|f| {
+            let size = f.area();
+            let block = Block::default().title("New Entry").borders(Borders::ALL);
+
+            let content = match edit_mode {
+                EditMode::Uri => format!("URI: {}", entry.login.uris[0].uri),
+                EditMode::Password => format!("Password: {}", entry.login.password),
+                EditMode::Note => format!("Notes: {}", entry.notes.as_deref().unwrap_or("")),
+                EditMode::Username => format!("Username: {}", entry.login.username.as_deref().unwrap_or("")),
+                EditMode::Name => format!("Name: {}", entry.name),
+                _ => String::new(),
+            };
+
+            let paragraph = Paragraph::new(content).block(block);
+            f.render_widget(paragraph, size);
+        }).unwrap();
+
+        if let Event::Key(key) = event::read().unwrap() {
+            match key.code {
+                KeyCode::Enter => break, // Finish editing
+                KeyCode::Tab => {
+                    // Switch editing modes
+                    edit_mode = match edit_mode {
+                        EditMode::Uri => EditMode::Password,
+                        EditMode::Password => EditMode::Note,
+                        EditMode::Note => EditMode::Username,
+                        EditMode::Username => EditMode::Name,
+                        EditMode::Name => EditMode::Uri,
+                        _ => EditMode::Uri,
+                    };
+                }
+                KeyCode::Char(c) => match edit_mode {
+                    EditMode::Uri => entry.login.uris[0].uri.push(c),
+                    EditMode::Password => entry.login.password.push(c),
+                    EditMode::Note => {
+                        if entry.notes.is_none() {
+                            entry.notes = Some(String::new());
+                        }
+                        entry.notes.as_mut().unwrap().push(c);
+                    }
+                    EditMode::Username => {
+                        if entry.login.username.is_none() {
+                            entry.login.username = Some(String::new());
+                        }
+                        entry.login.username.as_mut().unwrap().push(c);
+                    }
+                    EditMode::Name => entry.name.push(c),
+                    _ => {}
+                },
+                KeyCode::Backspace => match edit_mode {
+                    EditMode::Uri => { entry.login.uris[0].uri.pop(); }
+                    EditMode::Password => { entry.login.password.pop(); }
+                    EditMode::Note => {
+                        if let Some(notes) = &mut entry.notes {
+                            notes.pop();
+                        }
+                    }
+                    EditMode::Username => {
+                        if let Some(username) = &mut entry.login.username {
+                            username.pop();
+                        }
+                    }
+                    EditMode::Name => {entry.name.pop();}
+                    _ => {}
+                },
+                KeyCode::Esc => break, // Exit without saving
+                _ => {}
+            }
+        }
     }
+
+    terminal.clear().unwrap();
+
+    entry
+}
+
+
+
+pub fn display_uris(mut entries: Vec<Entry>) -> Result<Vec<Entry>, Box<dyn Error>> {
+    let mut name_list = entries.iter().map(|item| item.name.clone()).collect::<Vec<_>>();
     let mut stateful_list = StatefulList::new(name_list);
 
     // Initializing the terminal with CrosstermBackend
@@ -137,6 +232,8 @@ pub fn display_uris(uris: Vec<String>,mut entries: Vec<Entry>) -> Result<Vec<Ent
                                 EditMode::Uri => EditMode::Password,
                                 EditMode::Password => EditMode::Note,
                                 EditMode::Note => EditMode::Uri,
+                                EditMode::Username => EditMode::Username,
+                                EditMode::Name => EditMode::None,
                             };
                         }
                         _ => popup.handle_input(key.code),
@@ -151,6 +248,13 @@ pub fn display_uris(uris: Vec<String>,mut entries: Vec<Entry>) -> Result<Vec<Ent
                             popup = Some(PasswordPopup::from_entry(&mut entries[selected_index]));
                             show_popup = true; // Show the popup
                         }
+                        KeyCode::Char('+') => {
+                            let new_entry: Entry = add_entry();
+                            let new_entry_name = new_entry.name.clone();
+                            popup = None;
+                            entries.push(new_entry);
+                            stateful_list.items.push(new_entry_name)
+                        },
                         KeyCode::Esc => break, // Exit the loop
                         _ => {}
                     }
@@ -165,9 +269,6 @@ pub fn display_uris(uris: Vec<String>,mut entries: Vec<Entry>) -> Result<Vec<Ent
     Ok(entries)
 }
 
-pub fn check_regex(){
-    todo!();
-}
 
 
 struct StatefulList {
@@ -401,6 +502,8 @@ enum EditMode {
     Uri,
     Password,
     Note,
+    Username,
+    Name,
 }
 
 impl<'a> PasswordPopup<'a> {
@@ -436,10 +539,15 @@ impl<'a> PasswordPopup<'a> {
         ]));
         content.lines.push(Line::from(vec![
             Span::raw("Username: "),
-            Span::styled(
-                self.entry.login.username.as_deref().unwrap_or("(none)"),
-                Style::default(),
-            )
+            if matches!(self.edit_mode, EditMode::Note){
+                if self.entry.notes.is_some(){
+                Span::styled(self.entry.notes.as_ref().unwrap(), Style::default().fg(Color::Cyan))}
+                else {
+                    Span::raw("(none)").style(Style::default().fg(Color::Cyan))
+                }
+            } else {
+                Span::raw("(none)")
+            },
         ]));
         
         content.lines.push(Line::from(vec![
@@ -512,8 +620,28 @@ impl<'a> PasswordPopup<'a> {
                 }
                 KeyCode::Tab => self.edit_mode = EditMode::Uri,
                 _ => {}
-            }
+            },
+            EditMode::Username => match key {
+                KeyCode::Char(c) => {
+                    if self.entry.notes.is_some(){
+                        self.entry.notes.as_mut().unwrap().push(c)
+                    }
+                    else {
+                        self.entry.notes = Some(String::new());
+                        self.entry.notes.as_mut().unwrap().push(c)
+                    }
+                }
+                KeyCode::Backspace => {
+                    if self.entry.notes.is_some() {
+                        self.entry.notes.as_mut().unwrap().pop();
+                    }
+                    else{}
+                }
+                KeyCode::Tab => self.edit_mode = EditMode::Note,
+                _ => {}
+            },
             EditMode::None => {},
+            EditMode::Name => {},
         }
     }
 }
