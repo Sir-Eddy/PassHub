@@ -13,7 +13,7 @@ use ratatui::{
 
 
 
-use super::logik::{ get_uris, Entry, Uri, Login};
+use super::logik::{ self, get_uris, Entry, Login, Uri};
 
 pub fn display_data_empty() {
     // Setup terminal for error screen
@@ -144,21 +144,29 @@ pub fn add_entry() -> Entry {
                 KeyCode::Char(c) => {
                     // Edit the selected field
                     match popup_fields.state.selected() {
-                        Some(0) => new_entry.name.push(c),
-                        Some(1) => new_entry.login.uris[0].uri.push(c),
+                        Some(0) => {
+                            if logik::validate_string_length(&new_entry.name){
+                                new_entry.name.push(c)}},
+                        Some(1) => {
+                            if logik::validate_string_length(&new_entry.login.uris[0].uri){
+                                new_entry.login.uris[0].uri.push(c)}},
                         Some(2) => {
                             if new_entry.login.username.is_none() {
                                 new_entry.login.username = Some(String::new());
                             }
-                            new_entry.login.username.as_mut().unwrap().push(c);
-                        }
-                        Some(3) => new_entry.login.password.push(c),
+                            if logik::validate_string_length(&new_entry.login.username.as_ref().unwrap()) {
+                                new_entry.login.username.as_mut().unwrap().push(c);
+                        }}
+                        Some(3) => {
+                            if logik::validate_string_length(&new_entry.login.password){
+                            new_entry.login.password.push(c)}},
                         Some(4) => {
                             if new_entry.notes.is_none() {
                                 new_entry.notes = Some(String::new());
                             }
+                            if logik::validate_string_length(&new_entry.notes.as_ref().unwrap()){
                             new_entry.notes.as_mut().unwrap().push(c);
-                        }
+                        }}
                         _ => {}
                     }
                 }
@@ -656,7 +664,10 @@ impl<'a> PasswordPopup<'a> {
     pub fn handle_input(&mut self, key: KeyCode) {
         match self.edit_mode {
             EditMode::Uri => match key {
-                KeyCode::Char(c) => self.entry.login.uris[0].uri.push(c),
+                KeyCode::Char(c) => {
+                    if logik::validate_string_length(&self.entry.login.uris[0].uri){ 
+                    self.entry.login.uris[0].uri.push(c)}
+            },
                 KeyCode::Backspace => {
                     self.entry.login.uris[0].uri.pop();
                 }
@@ -664,7 +675,10 @@ impl<'a> PasswordPopup<'a> {
                 _ => {}
             },
             EditMode::Password => match key {
-                KeyCode::Char(c) => self.entry.login.password.push(c),
+                KeyCode::Char(c) => {
+                    if logik::validate_string_length(&self.entry.login.password){
+                    self.entry.login.password.push(c)}
+                },
                 KeyCode::Backspace => {
                     self.entry.login.password.pop();
                 }
@@ -674,8 +688,10 @@ impl<'a> PasswordPopup<'a> {
             EditMode::Note => match key {
                 KeyCode::Char(c) => {
                     if self.entry.notes.is_some(){
+                        if logik::validate_string_length(&self.entry.notes.as_ref().unwrap()){
                         self.entry.notes.as_mut().unwrap().push(c);
                     }
+                }
                     else {
                         self.entry.notes = Some(String::new());
                         self.entry.notes.as_mut().unwrap().push(c)
@@ -700,7 +716,8 @@ impl<'a> PasswordPopup<'a> {
             EditMode::Username => match key {
                 KeyCode::Char(c) => {
                     if self.entry.login.username.is_some(){
-                        self.entry.login.username.as_mut().unwrap().push(c)
+                        if logik::validate_string_length(&self.entry.login.username.as_ref().unwrap()){
+                        self.entry.login.username.as_mut().unwrap().push(c)}
                     }
                     else {
                         self.entry.login.username = Some(String::new());

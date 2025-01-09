@@ -59,14 +59,6 @@ pub fn main_menue(backend_url: &String, token: &String, password_hash: &String) 
 }
 
 
-pub fn add_password(){
-    todo!();
-}
-
-pub fn delete_user(){
-    todo!();
-}
-
 pub fn get_uris(json_entries:Vec<Entry>)->Result<Vec<String>, Error>{
     //array für die Speicherung der uris anlegen
     let mut uris = Vec::new();
@@ -131,3 +123,12 @@ pub struct Entry {
     pub login: Login,
 }
 
+pub fn validate_string_length(string: &String)-> bool {
+    let capacity: usize = 200;
+    if string.len() > capacity {
+        return false;
+    }
+    else {
+        return true;
+    }
+}
