@@ -1,19 +1,19 @@
 use log::debug;
 use serde_json::Value;
-use std::{error::Error,  io::{self, stdout,Error as ioError, ErrorKind, Stdout}, vec};
+use std::{error::Error,  io::{self, stdout}, vec};
 use crossterm::{
-    event::{self, Event, KeyCode, KeyEventKind, KeyEvent},
+    event::{self, Event, KeyCode, KeyEventKind },
     execute,
-    terminal::{self, disable_raw_mode, enable_raw_mode, EnterAlternateScreen, LeaveAlternateScreen},
+    terminal::{disable_raw_mode, enable_raw_mode, EnterAlternateScreen, LeaveAlternateScreen},
 };
 use ratatui::{
-    backend::CrosstermBackend,buffer::Buffer, layout::{Constraint, Direction, Layout, Rect}, prelude::Backend, style::{Color, Modifier, Style, Stylize}, text::{Line, Text, Span}, widgets::{Block, Borders, Clear, List, ListDirection, ListItem, ListState, Paragraph, Widget, Wrap}, Frame, Terminal
+    backend::CrosstermBackend,buffer::Buffer, layout::{Constraint, Direction, Layout, Rect}, style::{Color, Modifier, Style}, text::{Line, Text, Span}, widgets::{Block, Borders, Clear, List, ListItem, ListState, Paragraph, Widget, Wrap}, Frame, Terminal
 };
-use derive_setters::Setters;
 
 
 
-use super::logik::{self, get_uris, serialize_json, Entry, Uri, Login};
+
+use super::logik::{ get_uris, Entry, Uri, Login};
 
 pub fn display_data_empty() {
     // Setup terminal for error screen
@@ -60,7 +60,7 @@ pub fn display_data(json_data: Value) -> Result<Vec<Entry>, Box<dyn Error>> {
     let entries_2 = entries.clone();
     let uris = get_uris(entries);
     match uris{
-        Ok(vector) => {display_uris( entries_2)},
+        Ok(_) => {display_uris( entries_2)},
         Err(e)=> {debug!("Error while parsing JSON!");
     Err(Box::new(e))},
     }
@@ -195,7 +195,7 @@ pub fn add_entry() -> Entry {
 
 
 pub fn display_uris(mut entries: Vec<Entry>) -> Result<Vec<Entry>, Box<dyn Error>> {
-    let mut name_list = entries.iter().map(|item| item.name.clone()).collect::<Vec<_>>();
+    let name_list = entries.iter().map(|item| item.name.clone()).collect::<Vec<_>>();
     let mut stateful_list = StatefulList::new(name_list);
 
     // Initializing the terminal with CrosstermBackend
@@ -205,8 +205,8 @@ pub fn display_uris(mut entries: Vec<Entry>) -> Result<Vec<Entry>, Box<dyn Error
     terminal.clear().unwrap();
     enable_raw_mode().unwrap();
 
-    let mut show_popup = false; // Track whether the popup is displayed
-    let mut selected_index = 0;
+    let mut show_popup = false;
+    let mut selected_index = 0; // Track whether the popup is displayed
     let mut popup: Option<PasswordPopup> = None; // Track selected entry index
 
     loop {
@@ -254,13 +254,13 @@ pub fn display_uris(mut entries: Vec<Entry>) -> Result<Vec<Entry>, Box<dyn Error
                     match key.code {
                         KeyCode::Esc => show_popup = false,
                         KeyCode::Tab => {
-                            popup.edit_mode = match popup.edit_mode{
+                            popup.edit_mode = match popup.edit_mode {
                                 EditMode::None => EditMode::Uri,
                                 EditMode::Uri => EditMode::Password,
-                                EditMode::Password => EditMode::Note,
-                                EditMode::Note => EditMode::Uri,
-                                EditMode::Username => EditMode::Username,
-                                EditMode::Name => EditMode::None,
+                                EditMode::Password => EditMode::Username,
+                                EditMode::Note => EditMode::Name,
+                                EditMode::Username => EditMode::Note,
+                                EditMode::Name => EditMode::Uri,
                             };
                         }
                         _ => popup.handle_input(key.code),
@@ -595,8 +595,8 @@ impl<'a> PasswordPopup<'a> {
         content.lines.push(Line::from(vec![
             Span::raw("Username: "),
             if matches!(self.edit_mode, EditMode::Username){
-                if self.entry.notes.is_some(){
-                Span::styled(self.entry.notes.as_ref().unwrap(), Style::default().fg(Color::Cyan))}
+                if self.entry.login.username.is_some(){
+                Span::styled(self.entry.login.username.as_ref().unwrap(), Style::default().fg(Color::Cyan))}
                 else {
                     Span::raw("(none)").style(Style::default().fg(Color::Cyan))
                 }
@@ -612,19 +612,33 @@ impl<'a> PasswordPopup<'a> {
                 Style::default(),
             )
         ]));
+        //if \n in the string to be rendered, there shall be a line break
+        if let Some(notes) = self.entry.notes.as_deref() {
 
-        content.lines.push(Line::from(vec![
-            Span::raw("Notes: "),
-            if matches!(self.edit_mode, EditMode::Note){
-                if self.entry.notes.is_some(){
-                Span::styled(self.entry.notes.as_ref().unwrap(), Style::default().fg(Color::Cyan))}
-                else {
-                    Span::raw("(none)").style(Style::default().fg(Color::Cyan))
-                }
-            } else {
-                Span::raw("(none)")
-            },
-        ]));
+            let lines: Vec<&str> = notes.split('\n').collect();
+        
+            for (i, line) in lines.iter().enumerate() {
+                content.lines.push(Line::from(vec![
+                    if i == 0 {
+                        Span::raw("Notes: ")
+                    } else {
+                        Span::raw("      ") // Align subsequent lines
+                    },
+                    if matches!(self.edit_mode, EditMode::Note) {
+                        Span::styled(*line, Style::default().fg(Color::Cyan))
+                    } else {
+                        Span::raw(*line)
+                    },
+                ]));
+            }
+        } else {
+            // When Notes is None
+            content.lines.push(Line::from(vec![
+                Span::raw("Notes: "),
+                Span::styled("(none)", Style::default().fg(Color::Cyan)),
+            ]));
+        }
+        
 
         // Render the block and paragraph
         let block = Block::default()
@@ -654,18 +668,19 @@ impl<'a> PasswordPopup<'a> {
                 KeyCode::Backspace => {
                     self.entry.login.password.pop();
                 }
-                KeyCode::Tab => self.edit_mode = EditMode::Note,
+                KeyCode::Tab => self.edit_mode = EditMode::Username,
                 _ => {}
             },
             EditMode::Note => match key {
                 KeyCode::Char(c) => {
                     if self.entry.notes.is_some(){
-                        self.entry.notes.as_mut().unwrap().push(c)
+                        self.entry.notes.as_mut().unwrap().push(c);
                     }
                     else {
                         self.entry.notes = Some(String::new());
                         self.entry.notes.as_mut().unwrap().push(c)
                     }
+                    
                 }
                 KeyCode::Backspace => {
                     if self.entry.notes.is_some() {
@@ -673,22 +688,28 @@ impl<'a> PasswordPopup<'a> {
                     }
                     else{}
                 }
+                KeyCode::Enter => {
+                    if self.entry.notes.is_none() {
+                        self.entry.notes = Some(String::new());
+                    }
+                    self.entry.notes.as_mut().unwrap().push('\n'); // Add a newline
+                }
                 KeyCode::Tab => self.edit_mode = EditMode::Uri,
                 _ => {}
             },
             EditMode::Username => match key {
                 KeyCode::Char(c) => {
-                    if self.entry.notes.is_some(){
-                        self.entry.notes.as_mut().unwrap().push(c)
+                    if self.entry.login.username.is_some(){
+                        self.entry.login.username.as_mut().unwrap().push(c)
                     }
                     else {
-                        self.entry.notes = Some(String::new());
-                        self.entry.notes.as_mut().unwrap().push(c)
+                        self.entry.login.username = Some(String::new());
+                        self.entry.login.username.as_mut().unwrap().push(c)
                     }
                 }
                 KeyCode::Backspace => {
-                    if self.entry.notes.is_some() {
-                        self.entry.notes.as_mut().unwrap().pop();
+                    if self.entry.login.username.is_some() {
+                        self.entry.login.username.as_mut().unwrap().pop();
                     }
                     else{}
                 }
