@@ -262,7 +262,7 @@ pub fn display_uris(mut entries: Vec<Entry>) -> Result<Vec<Entry>, Box<dyn Error
     enable_raw_mode().unwrap();
 
     let mut show_popup = false;
-    let mut selected_index = 0; // Track whether the popup is displayed
+    let mut selected_index ; // Track whether the popup is displayed
     let mut popup: Option<PasswordPopup> = None; // Track selected entry index
 
     loop {
@@ -418,7 +418,7 @@ impl StatefulList {
     }
 
     fn delete_selected(&mut self) {
-        let i = match self.state.selected() {
+        let _i = match self.state.selected() {
             Some(i) => {
                 self.items.remove(i);
             }
@@ -494,8 +494,8 @@ pub fn serialization_error() {
 
 #[derive(Debug)]
 struct PasswordPopup<'a> {
-    title: Line<'a>,
-    border_style: Style,
+    _title: Line<'a>,
+    _border_style: Style,
     style: Style,
     edit_mode: EditMode,
     entry: &'a mut Entry,
@@ -514,8 +514,8 @@ enum EditMode {
 impl<'a> PasswordPopup<'a> {
     pub fn from_entry(entry: &'a mut Entry) -> Self {
         PasswordPopup {
-            title: Line::from("Password Entry"),
-            border_style: Style::default(),
+            _title: Line::from("Password Entry"),
+            _border_style: Style::default(),
             style: Style::default(),
             entry,
             edit_mode: EditMode::None,
