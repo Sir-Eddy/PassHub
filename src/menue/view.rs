@@ -7,7 +7,7 @@ use crossterm::{
     terminal::{disable_raw_mode, enable_raw_mode, EnterAlternateScreen, LeaveAlternateScreen},
 };
 use ratatui::{
-    backend::CrosstermBackend,buffer::Buffer, layout::{Constraint, Direction, Layout, Rect}, style::{Color, Modifier, Style}, text::{Line, Text, Span}, widgets::{Block, Borders, Clear, List, ListItem, ListState, Paragraph, Widget, Wrap}, Frame, Terminal
+    backend::CrosstermBackend,buffer::Buffer, layout::{Constraint, Direction, Layout, Rect}, style::{Color, Modifier, Style, Styled, Stylize}, text::{Line, Span, Text}, widgets::{Block, Borders, Clear, List, ListItem, ListState, Paragraph, Widget, Wrap}, Frame, Terminal
 };
 
 
@@ -28,7 +28,9 @@ pub fn display_data_empty() {
             let size = frame.area();
             let block = Block::default()
                 .borders(Borders::ALL)
-                .title("Main Menue");
+                .title("PassHub")
+                .border_style(Style::default().fg(Color::Rgb(255, 163, 26)))
+                .title_style(Style::default().add_modifier(Modifier::BOLD));
 
             let paragraph = Paragraph::new("No data stored. \nPlease press p to add a new password.")
                 .block(block);
@@ -50,8 +52,8 @@ pub fn display_data_empty() {
 }
 
 
-pub fn display_data(json_data: Value) -> Result<Vec<Entry>, Box<dyn Error>> {
-    let entries = super::logik::deserialize_json(json_data);
+pub fn display_data(json_data: &Value) -> Result<Vec<Entry>, Box<dyn Error>> {
+    let entries = super::logik::deserialize_json(&json_data);
     let entries = match entries{
         Ok(e) => e,
         Err(..) => {debug!("There was an error while parsing JSON");
@@ -112,8 +114,9 @@ pub fn add_entry() -> Entry {
                 .collect();
 
             let list = List::new(list_items)
-                .block(Block::default().borders(Borders::ALL).title("Add New Entry"))
-                .highlight_style(Style::default().fg(Color::Yellow))
+                .block(Block::default().borders(Borders::ALL)
+                .title("Add New Entry"))
+                .highlight_style(Style::default().fg(Color::Rgb(255, 163, 26)))
                 .highlight_symbol(">> ");
 
             f.render_stateful_widget(list, chunks[0], &mut popup_fields.state);
@@ -136,39 +139,40 @@ pub fn add_entry() -> Entry {
 
         // Handle user input in the popup
         if let Event::Key(key) = event::read().unwrap() {
-            match key.code {
-                KeyCode::Esc => break, // Exit the popup
-                KeyCode::Up => popup_fields.previous(),
-                KeyCode::Down => popup_fields.next(),
-                KeyCode::Enter => break, // Finalize entry
-                KeyCode::Char(c) => {
-                    // Edit the selected field
-                    match popup_fields.state.selected() {
-                        Some(0) => {
-                            if logik::validate_string_length(&new_entry.name){
-                                new_entry.name.push(c)}},
-                        Some(1) => {
-                            if logik::validate_string_length(&new_entry.login.uris[0].uri){
-                                new_entry.login.uris[0].uri.push(c)}},
-                        Some(2) => {
-                            if new_entry.login.username.is_none() {
-                                new_entry.login.username = Some(String::new());
-                            }
-                            if logik::validate_string_length(&new_entry.login.username.as_ref().unwrap()) {
-                                new_entry.login.username.as_mut().unwrap().push(c);
-                        }}
-                        Some(3) => {
-                            if logik::validate_string_length(&new_entry.login.password){
-                            new_entry.login.password.push(c)}},
-                        Some(4) => {
-                            if new_entry.notes.is_none() {
-                                new_entry.notes = Some(String::new());
-                            }
-                            if logik::validate_string_length(&new_entry.notes.as_ref().unwrap()){
-                            new_entry.notes.as_mut().unwrap().push(c);
-                        }}
-                        _ => {}
-                    }
+            if key.kind == KeyEventKind::Press {
+                match key.code {
+                    KeyCode::Esc => break, // Exit the popup
+                    KeyCode::Up => popup_fields.previous(),
+                    KeyCode::Down => popup_fields.next(),
+                    KeyCode::Enter => break, // Finalize entry
+                    KeyCode::Char(c) => {
+                        // Edit the selected field
+                        match popup_fields.state.selected() {
+                            Some(0) => {
+                                if logik::validate_string_length(&new_entry.name){
+                                    new_entry.name.push(c)}},
+                            Some(1) => {
+                                if logik::validate_string_length(&new_entry.login.uris[0].uri){
+                                    new_entry.login.uris[0].uri.push(c)}},
+                            Some(2) => {
+                                if new_entry.login.username.is_none() {
+                                    new_entry.login.username = Some(String::new());
+                                }
+                                if logik::validate_string_length(&new_entry.login.username.as_ref().unwrap()) {
+                                    new_entry.login.username.as_mut().unwrap().push(c);
+                            }}
+                            Some(3) => {
+                                if logik::validate_string_length(&new_entry.login.password){
+                                new_entry.login.password.push(c)}},
+                            Some(4) => {
+                                if new_entry.notes.is_none() {
+                                    new_entry.notes = Some(String::new());
+                                }
+                                if logik::validate_string_length(&new_entry.notes.as_ref().unwrap()){
+                                new_entry.notes.as_mut().unwrap().push(c);
+                            }}
+                            _ => {}
+                        }
                 }
                 KeyCode::Backspace => {
                     // Handle deletion of characters in the selected field
@@ -193,6 +197,7 @@ pub fn add_entry() -> Entry {
             }
         }
     }
+}
 
     terminal.clear().unwrap();
 
@@ -234,8 +239,14 @@ pub fn display_uris(mut entries: Vec<Entry>) -> Result<Vec<Entry>, Box<dyn Error
                     .collect();
 
                 let list = List::new(list_items)
-                    .block(ratatui::widgets::Block::default().borders(ratatui::widgets::Borders::ALL))
-                    .highlight_style(Style::default().fg(Color::Yellow))
+                    .block(ratatui::widgets::Block::default()
+                    .borders(ratatui::widgets::Borders::ALL)
+                    .border_style(Style::default().fg(Color::Rgb(255, 163, 26)))
+                    .title("PassHub")
+                    .title_bottom("Add entry (+), delete entry (DEL), log out (ESC), navigate (arrow keys)")
+                    .title_style(Style::default()
+                    .add_modifier(Modifier::BOLD)))
+                    .highlight_style(Style::default().fg(Color::Rgb(255, 163, 26)))
                     .highlight_symbol(">> ");
 
                 f.render_stateful_widget(list, chunks[0], &mut stateful_list.state);
@@ -377,76 +388,6 @@ impl StatefulList {
 }
 
 
-
-
-pub fn invalid_token() {
-    // Setup terminal for error screen
-    enable_raw_mode().unwrap();
-    let mut stdout = io::stdout();
-    execute!(stdout, EnterAlternateScreen).unwrap();
-    let backend = CrosstermBackend::new(stdout);
-    let mut terminal = Terminal::new(backend).unwrap();
-
-    loop {
-        terminal.draw(|frame| {
-            let size = frame.area();
-            let block = Block::default()
-                .borders(Borders::ALL)
-                .title("Error");
-
-            let paragraph = Paragraph::new("Session longer than one hour. \nPlease sign in again.")
-                .block(block);
-
-            frame.render_widget(paragraph, size);
-        }).unwrap();
-
-        // Wait for user input to dismiss the error screen
-        if let Event::Key(key_event) = event::read().unwrap() {
-            if key_event.kind == KeyEventKind::Press && key_event.code == KeyCode::Enter {
-                break;
-            }
-        }
-    }
-
-    // Restore terminal
-    disable_raw_mode().unwrap();
-    execute!(io::stdout(), LeaveAlternateScreen).unwrap();
-}
-
-pub fn database_error() {
-    // Setup terminal for error screen
-    enable_raw_mode().unwrap();
-    let mut stdout = io::stdout();
-    execute!(stdout, EnterAlternateScreen).unwrap();
-    let backend = CrosstermBackend::new(stdout);
-    let mut terminal = Terminal::new(backend).unwrap();
-
-    loop {
-        terminal.draw(|frame| {
-            let size = frame.area();
-            let block = Block::default()
-                .borders(Borders::ALL)
-                .title("Error");
-
-            let paragraph = Paragraph::new("Internal Server Error! \nPlease sign in again.")
-                .block(block);
-
-            frame.render_widget(paragraph, size);
-        }).unwrap();
-
-        // Wait for user input to dismiss the error screen
-        if let Event::Key(key_event) = event::read().unwrap() {
-            if key_event.kind == KeyEventKind::Press && key_event.code == KeyCode::Enter {
-                break;
-            }
-        }
-    }
-
-    // Restore terminal
-    disable_raw_mode().unwrap();
-    execute!(io::stdout(), LeaveAlternateScreen).unwrap();
-}
-
 pub fn update_error(code: i16) {
     
     enable_raw_mode().unwrap();
@@ -460,9 +401,10 @@ pub fn update_error(code: i16) {
             let size = frame.area();
             let block = Block::default()
                 .borders(Borders::ALL)
-                .title("Error");
+                .title("Error")
+                .title_style(Style::default().add_modifier(Modifier::BOLD));
             let paragraph = match code {
-                401 => Paragraph::new("JWT Token is invalid!")
+                401 => Paragraph::new("Logout successfull!")
                 .block(block),
                 500 => Paragraph::new("Database Error or JWT Extraction Error!")
                 .block(block),
@@ -483,38 +425,6 @@ pub fn update_error(code: i16) {
     execute!(io::stdout(), LeaveAlternateScreen).unwrap();
 }
 
-pub fn unknown_error() {
-    // Setup terminal for error screen
-    enable_raw_mode().unwrap();
-    let mut stdout = io::stdout();
-    execute!(stdout, EnterAlternateScreen).unwrap();
-    let backend = CrosstermBackend::new(stdout);
-    let mut terminal = Terminal::new(backend).unwrap();
-
-    loop {
-        terminal.draw(|frame| {
-            let size = frame.area();
-            let block = Block::default()
-                .borders(Borders::ALL)
-                .title("Error");
-
-            let paragraph = Paragraph::new("Unknown Error. \nPlease sign in again.")
-                .block(block);
-
-            frame.render_widget(paragraph, size);
-        }).unwrap();
-
-        // Wait for user input to dismiss the error screen
-        if let Event::Key(key_event) = event::read().unwrap() {
-            if key_event.kind == KeyEventKind::Press && key_event.code == KeyCode::Enter {
-                break;
-            }
-        }
-    }
-    disable_raw_mode().unwrap();
-    execute!(io::stdout(), LeaveAlternateScreen).unwrap();
-}  
-
 pub fn serialization_error() {
     enable_raw_mode().unwrap();
     let mut stdout = io::stdout();
@@ -527,7 +437,8 @@ pub fn serialization_error() {
             let size = frame.area();
             let block = Block::default()
                 .borders(Borders::ALL)
-                .title("Error");
+                .title("Error")
+                .title_style(Style::default().add_modifier(Modifier::BOLD));
             let paragraph = Paragraph::new("Serialization Error!")
                     .block(block);
             
@@ -552,10 +463,10 @@ pub fn serialization_error() {
 struct PasswordPopup<'a> {
     title: Line<'a>,
     border_style: Style,
-    title_style: Style,
     style: Style,
     edit_mode: EditMode,
     entry: &'a mut Entry,
+    title_bottom: Line<'a>,
 }
 
 
@@ -574,10 +485,10 @@ impl<'a> PasswordPopup<'a> {
         PasswordPopup {
             title: Line::from("Password Entry"),
             border_style: Style::default(),
-            title_style: Style::default().add_modifier(Modifier::BOLD),
             style: Style::default(),
             entry,
             edit_mode: EditMode::None,
+            title_bottom: Line::from("Switch between fields (TAB), Return (ESC)"),
         }
     }
 
@@ -587,7 +498,7 @@ impl<'a> PasswordPopup<'a> {
         content.lines.push(Line::from(vec![
             Span::raw("URI: "),
             if matches!(self.edit_mode, EditMode::Uri) {
-                Span::styled(&self.entry.login.uris[0].uri, Style::default().fg(Color::Cyan))
+                Span::styled(&self.entry.login.uris[0].uri, Style::default().fg(Color::Rgb(255, 163, 26)))
             } else {
                 Span::raw(&self.entry.login.uris[0].uri)
             },
@@ -651,8 +562,10 @@ impl<'a> PasswordPopup<'a> {
         // Render the block and paragraph
         let block = Block::default()
             .title(self.title.clone())
+            .title_style(Style::default().add_modifier(Modifier::BOLD))
             .borders(Borders::ALL)
-            .border_style(self.border_style);
+            .border_style(self.border_style)
+            .title_bottom(self.title_bottom.clone());
 
         Paragraph::new(content)
             .block(block)

@@ -23,8 +23,6 @@ mod menue {
 use env_logger;
 use log::debug;
 
-use std::fs::File;
-use std::io::Write;
 
 //Main Funktion
 fn main() {

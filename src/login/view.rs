@@ -50,7 +50,7 @@ pub fn draw_login_screen(stored_email: String) -> (String, String) {
                 let title = Paragraph::new("PassHub Login")
                     .style(
                         Style::default()
-                            .fg(Color::Yellow)
+                            .fg(Color::Rgb(255, 163, 26))
                             .add_modifier(Modifier::BOLD),
                     )
                     .alignment(Alignment::Center)

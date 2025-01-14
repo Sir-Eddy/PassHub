@@ -49,7 +49,7 @@ pub fn draw_welcome_screen() -> Option<char> {
 
         // ASCII Art paragraph
         let art_paragraph = Paragraph::new(ascii_art)
-            .style(Style::default().fg(Color::Yellow))
+            .style(Style::default().fg(Color::Rgb(255, 163, 26)))
             .alignment(Alignment::Center);
 
         // Welcome message with instructions
