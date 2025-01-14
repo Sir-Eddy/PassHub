@@ -10,10 +10,7 @@ pub fn login_backend(base_url: &str, email: &str, password_hash: &str) -> Result
         "password_hash": password_hash
     });
 
-    let response = client
-        .post(&url)
-        .json(&payload)
-        .send();
+    let response = client.post(&url).json(&payload).send();
 
     match response {
         Ok(res) => {

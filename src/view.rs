@@ -5,7 +5,7 @@ use crossterm::{
 };
 use ratatui::{
     backend::CrosstermBackend,
-    layout::{Alignment, Layout, Constraint, Direction},
+    layout::{Alignment, Constraint, Direction, Layout},
     style::{Color, Style},
     widgets::Paragraph,
     Terminal,
@@ -71,7 +71,7 @@ pub fn draw_welcome_screen() -> Option<char> {
     let result = loop {
         if let Event::Key(key) = event::read().unwrap() {
             match key.code {
-                KeyCode::Enter => break None, // Continue without registration
+                KeyCode::Enter => break None,          // Continue without registration
                 KeyCode::Char('r') => break Some('r'), // Return 'r' for registration
                 _ => {}
             }
@@ -81,7 +81,11 @@ pub fn draw_welcome_screen() -> Option<char> {
     // Clear and restore terminal
     terminal.clear().unwrap();
     disable_raw_mode().unwrap();
-    execute!(terminal.backend_mut(), crossterm::terminal::LeaveAlternateScreen).unwrap();
+    execute!(
+        terminal.backend_mut(),
+        crossterm::terminal::LeaveAlternateScreen
+    )
+    .unwrap();
 
     result
 }

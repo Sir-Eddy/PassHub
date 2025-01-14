@@ -6,8 +6,8 @@ use crossterm::{
 use ratatui::{
     backend::CrosstermBackend,
     layout::{Alignment, Constraint, Direction, Layout},
-    widgets::{Block, Borders, Paragraph},
     style::{Color, Modifier, Style},
+    widgets::{Block, Borders, Paragraph},
     Terminal,
 };
 
@@ -30,55 +30,57 @@ pub fn draw_login_screen(stored_email: String) -> (String, String) {
     let mut is_password_field = !stored_email.is_empty();
 
     loop {
-        terminal.draw(|f| {
-            let chunks = Layout::default()
-                .direction(Direction::Vertical)
-                .margin(2)
-                .constraints(
-                    [
-                        Constraint::Percentage(30),
-                        Constraint::Percentage(20),
-                        Constraint::Percentage(20),
-                        Constraint::Percentage(30),
-                    ]
-                    .as_ref(),
-                )
-                .split(f.area());
+        terminal
+            .draw(|f| {
+                let chunks = Layout::default()
+                    .direction(Direction::Vertical)
+                    .margin(2)
+                    .constraints(
+                        [
+                            Constraint::Percentage(30),
+                            Constraint::Percentage(20),
+                            Constraint::Percentage(20),
+                            Constraint::Percentage(30),
+                        ]
+                        .as_ref(),
+                    )
+                    .split(f.area());
 
-            // Title
-            let title = Paragraph::new("PassHub Login")
-                .style(
-                    Style::default()
-                        .fg(Color::Yellow)
-                        .add_modifier(Modifier::BOLD),
-                )
-                .alignment(Alignment::Center)
-                .block(Block::default().borders(Borders::ALL).title("Login"));
+                // Title
+                let title = Paragraph::new("PassHub Login")
+                    .style(
+                        Style::default()
+                            .fg(Color::Yellow)
+                            .add_modifier(Modifier::BOLD),
+                    )
+                    .alignment(Alignment::Center)
+                    .block(Block::default().borders(Borders::ALL).title("Login"));
 
-            // Email Input
-            let email_paragraph = Paragraph::new(format!("E-Mail: {}", email))
-                .style(Style::default().fg(Color::White))
-                .block(
-                    Block::default()
-                        .borders(Borders::ALL)
-                        .title(if !is_password_field { "E-Mail" } else { " " }),
-                );
+                // Email Input
+                let email_paragraph = Paragraph::new(format!("E-Mail: {}", email))
+                    .style(Style::default().fg(Color::White))
+                    .block(
+                        Block::default()
+                            .borders(Borders::ALL)
+                            .title(if !is_password_field { "E-Mail" } else { " " }),
+                    );
 
-            // Password Input
-            let password_masked: String = "*".repeat(password.len());
-            let password_paragraph = Paragraph::new(format!("Password: {}", password_masked))
-                .style(Style::default().fg(Color::White))
-                .block(
-                    Block::default()
-                        .borders(Borders::ALL)
-                        .title(if is_password_field { "Password" } else { " " }),
-                );
+                // Password Input
+                let password_masked: String = "*".repeat(password.len());
+                let password_paragraph = Paragraph::new(format!("Password: {}", password_masked))
+                    .style(Style::default().fg(Color::White))
+                    .block(
+                        Block::default()
+                            .borders(Borders::ALL)
+                            .title(if is_password_field { "Password" } else { " " }),
+                    );
 
-            // Render Widgets
-            f.render_widget(title, chunks[0]);
-            f.render_widget(email_paragraph, chunks[1]);
-            f.render_widget(password_paragraph, chunks[2]);
-        }).unwrap();
+                // Render Widgets
+                f.render_widget(title, chunks[0]);
+                f.render_widget(email_paragraph, chunks[1]);
+                f.render_widget(password_paragraph, chunks[2]);
+            })
+            .unwrap();
 
         // Handle user input
         if let Event::Key(key) = event::read().unwrap() {
@@ -120,11 +122,14 @@ pub fn draw_login_screen(stored_email: String) -> (String, String) {
     // Clear and restore terminal
     terminal.clear().unwrap();
     disable_raw_mode().unwrap();
-    execute!(terminal.backend_mut(), crossterm::terminal::LeaveAlternateScreen).unwrap();
+    execute!(
+        terminal.backend_mut(),
+        crossterm::terminal::LeaveAlternateScreen
+    )
+    .unwrap();
 
     (email, password)
 }
-
 
 pub fn error_argon2_fail() {
     // Setup terminal for error screen
@@ -160,7 +165,6 @@ pub fn error_argon2_fail() {
     execute!(io::stdout(), LeaveAlternateScreen).unwrap();
 }
 
-
 pub fn error_unauthorized() {
     // Setup terminal for error screen
     enable_raw_mode().unwrap();
@@ -170,17 +174,19 @@ pub fn error_unauthorized() {
     let mut terminal = Terminal::new(backend).unwrap();
 
     loop {
-        terminal.draw(|frame| {
-            let size = frame.area();
-            let block = Block::default()
-                .borders(Borders::ALL)
-                .title("Error");
+        terminal
+            .draw(|frame| {
+                let size = frame.area();
+                let block = Block::default().borders(Borders::ALL).title("Error");
 
-            let paragraph = Paragraph::new("Login failed. Please check your credentials. \n Press Enter to try again.")
+                let paragraph = Paragraph::new(
+                    "Login failed. Please check your credentials. \n Press Enter to try again.",
+                )
                 .block(block);
 
-            frame.render_widget(paragraph, size);
-        }).unwrap();
+                frame.render_widget(paragraph, size);
+            })
+            .unwrap();
 
         // Wait for user input to dismiss the error screen
         if let Event::Key(key_event) = event::read().unwrap() {
@@ -204,17 +210,17 @@ pub fn error_network() {
     let mut terminal = Terminal::new(backend).unwrap();
 
     loop {
-        terminal.draw(|frame| {
-            let size = frame.area();
-            let block = Block::default()
-                .borders(Borders::ALL)
-                .title("Error");
+        terminal
+            .draw(|frame| {
+                let size = frame.area();
+                let block = Block::default().borders(Borders::ALL).title("Error");
 
-            let paragraph = Paragraph::new("Network Error. \n Press Enter to try again.")
-                .block(block);
+                let paragraph =
+                    Paragraph::new("Network Error. \n Press Enter to try again.").block(block);
 
-            frame.render_widget(paragraph, size);
-        }).unwrap();
+                frame.render_widget(paragraph, size);
+            })
+            .unwrap();
 
         // Wait for user input to dismiss the error screen
         if let Event::Key(key_event) = event::read().unwrap() {
@@ -228,7 +234,6 @@ pub fn error_network() {
     disable_raw_mode().unwrap();
     execute!(io::stdout(), LeaveAlternateScreen).unwrap();
 }
-
 
 pub fn error_user_not_found() {
     // Setup terminal for error screen
@@ -280,17 +285,17 @@ pub fn error_bad_request() {
     let mut terminal = Terminal::new(backend).unwrap();
 
     loop {
-        terminal.draw(|frame| {
-            let size = frame.area();
-            let block = Block::default()
-                .borders(Borders::ALL)
-                .title("Error");
+        terminal
+            .draw(|frame| {
+                let size = frame.area();
+                let block = Block::default().borders(Borders::ALL).title("Error");
 
-            let paragraph = Paragraph::new("Invalid Payload. \n Press Enter to try again.")
-                .block(block);
+                let paragraph =
+                    Paragraph::new("Invalid Payload. \n Press Enter to try again.").block(block);
 
-            frame.render_widget(paragraph, size);
-        }).unwrap();
+                frame.render_widget(paragraph, size);
+            })
+            .unwrap();
 
         // Wait for user input to dismiss the error screen
         if let Event::Key(key_event) = event::read().unwrap() {
@@ -314,17 +319,17 @@ pub fn error_unknown() {
     let mut terminal = Terminal::new(backend).unwrap();
 
     loop {
-        terminal.draw(|frame| {
-            let size = frame.area();
-            let block = Block::default()
-                .borders(Borders::ALL)
-                .title("Error");
+        terminal
+            .draw(|frame| {
+                let size = frame.area();
+                let block = Block::default().borders(Borders::ALL).title("Error");
 
-            let paragraph = Paragraph::new("Unknown. \n Press Enter to try again.")
-                .block(block);
+                let paragraph =
+                    Paragraph::new("Unknown. \n Press Enter to try again.").block(block);
 
-            frame.render_widget(paragraph, size);
-        }).unwrap();
+                frame.render_widget(paragraph, size);
+            })
+            .unwrap();
 
         // Wait for user input to dismiss the error screen
         if let Event::Key(key_event) = event::read().unwrap() {
