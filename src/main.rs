@@ -23,7 +23,6 @@ mod menue {
 use env_logger;
 use log::debug;
 
-
 //Main Funktion
 fn main() {
     //Logging initialisieren
