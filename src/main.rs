@@ -45,7 +45,7 @@ fn main() {
             Some('d') => {
                 (token, _) = login::logik::login(&backend_url);
                 delete::logik::delete(&backend_url, &token);
-                std::process::exit(1);
+                std::process::exit(0);
             }
             _ => {
                 (token, password_hash) = login::logik::login(&backend_url);
