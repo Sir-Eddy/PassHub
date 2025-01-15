@@ -1,3 +1,4 @@
+use copypasta::{ClipboardContext, ClipboardProvider};
 use crossterm::{
     event::{self, Event, KeyCode, KeyEventKind, KeyModifiers},
     execute,
@@ -19,7 +20,6 @@ use std::{
     io::{self, stdout},
     vec,
 };
-use copypasta::{ClipboardContext, ClipboardProvider};
 
 use super::logik::{self, get_uris, Entry, Login, Uri};
 
@@ -601,13 +601,18 @@ impl<'a> PasswordPopup<'a> {
     pub fn handle_input(&mut self, key: KeyCode, modifiers: KeyModifiers) {
         match self.edit_mode {
             EditMode::Uri => match (key, modifiers) {
-                (KeyCode::Char(c), KeyModifiers::NONE | KeyModifiers::SHIFT | KeyModifiers::ALT) => {
+                (
+                    KeyCode::Char(c),
+                    KeyModifiers::NONE | KeyModifiers::SHIFT | KeyModifiers::ALT,
+                ) => {
                     if logik::validate_string_length(&self.entry.login.uris[0].uri) {
                         self.entry.login.uris[0].uri.push(c);
                     }
                 }
                 //Alt Gr
-                (KeyCode::Char(c), m) if m.contains(KeyModifiers::ALT) && m.contains(KeyModifiers::CONTROL) => {
+                (KeyCode::Char(c), m)
+                    if m.contains(KeyModifiers::ALT) && m.contains(KeyModifiers::CONTROL) =>
+                {
                     if logik::validate_string_length(&self.entry.login.uris[0].uri) {
                         self.entry.login.uris[0].uri.push(c);
                     }
@@ -618,7 +623,7 @@ impl<'a> PasswordPopup<'a> {
                 (KeyCode::Tab, KeyModifiers::NONE) => self.edit_mode = EditMode::Password,
                 // Copy (Ctrl + C)
                 (KeyCode::Char('c'), KeyModifiers::CONTROL) => {
-                    if let Some(uri) = self.entry.login.uris.get(0) {
+                    if let Some(uri) = self.entry.login.uris.first() {
                         let uri_clone = uri.uri.clone();
                         copy_to_clipboard(uri_clone);
                     }
@@ -634,13 +639,18 @@ impl<'a> PasswordPopup<'a> {
                 _ => {}
             },
             EditMode::Password => match (key, modifiers) {
-                (KeyCode::Char(c), KeyModifiers::NONE | KeyModifiers::SHIFT | KeyModifiers::ALT) => {
+                (
+                    KeyCode::Char(c),
+                    KeyModifiers::NONE | KeyModifiers::SHIFT | KeyModifiers::ALT,
+                ) => {
                     if logik::validate_string_length(&self.entry.login.password) {
                         self.entry.login.password.push(c);
                     }
                 }
                 //Alt Gr
-                (KeyCode::Char(c), m) if m.contains(KeyModifiers::ALT) && m.contains(KeyModifiers::CONTROL) => {
+                (KeyCode::Char(c), m)
+                    if m.contains(KeyModifiers::ALT) && m.contains(KeyModifiers::CONTROL) =>
+                {
                     if logik::validate_string_length(&self.entry.login.uris[0].uri) {
                         self.entry.login.uris[0].uri.push(c);
                     }
@@ -665,7 +675,10 @@ impl<'a> PasswordPopup<'a> {
                 _ => {}
             },
             EditMode::Note => match (key, modifiers) {
-                (KeyCode::Char(c), KeyModifiers::NONE | KeyModifiers::SHIFT | KeyModifiers::ALT) => {
+                (
+                    KeyCode::Char(c),
+                    KeyModifiers::NONE | KeyModifiers::SHIFT | KeyModifiers::ALT,
+                ) => {
                     if self.entry.notes.is_some() {
                         if logik::validate_string_length(self.entry.notes.as_ref().unwrap()) {
                             self.entry.notes.as_mut().unwrap().push(c);
@@ -676,7 +689,9 @@ impl<'a> PasswordPopup<'a> {
                     }
                 }
                 //Alt Gr
-                (KeyCode::Char(c), m) if m.contains(KeyModifiers::ALT) && m.contains(KeyModifiers::CONTROL) => {
+                (KeyCode::Char(c), m)
+                    if m.contains(KeyModifiers::ALT) && m.contains(KeyModifiers::CONTROL) =>
+                {
                     if logik::validate_string_length(&self.entry.login.uris[0].uri) {
                         self.entry.login.uris[0].uri.push(c);
                     }
@@ -710,7 +725,10 @@ impl<'a> PasswordPopup<'a> {
                 _ => {}
             },
             EditMode::Username => match (key, modifiers) {
-                (KeyCode::Char(c), KeyModifiers::NONE | KeyModifiers::SHIFT | KeyModifiers::ALT) => {
+                (
+                    KeyCode::Char(c),
+                    KeyModifiers::NONE | KeyModifiers::SHIFT | KeyModifiers::ALT,
+                ) => {
                     if self.entry.login.username.is_some() {
                         if logik::validate_string_length(
                             self.entry.login.username.as_ref().unwrap(),
@@ -723,7 +741,9 @@ impl<'a> PasswordPopup<'a> {
                     }
                 }
                 //Alt Gr
-                (KeyCode::Char(c), m) if m.contains(KeyModifiers::ALT) && m.contains(KeyModifiers::CONTROL) => {
+                (KeyCode::Char(c), m)
+                    if m.contains(KeyModifiers::ALT) && m.contains(KeyModifiers::CONTROL) =>
+                {
                     if logik::validate_string_length(&self.entry.login.uris[0].uri) {
                         self.entry.login.uris[0].uri.push(c);
                     }
@@ -753,7 +773,7 @@ impl<'a> PasswordPopup<'a> {
             EditMode::None => {}
             EditMode::Name => {}
         }
-    }    
+    }
 }
 
 fn copy_to_clipboard(content: String) {

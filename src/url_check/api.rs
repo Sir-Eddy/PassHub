@@ -5,7 +5,6 @@ use std::thread::sleep;
 use std::time::Duration;
 
 pub fn check_health(base_url: &str) -> bool {
-
     let health_url = format!("{}/api/v1/health", base_url);
     let client = Client::new();
 

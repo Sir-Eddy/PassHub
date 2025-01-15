@@ -153,5 +153,4 @@ pub fn logout(backend_url: &String, jwt_token: &String) -> Result<u16, Box<dyn s
     let status_code = response.status().as_u16();
 
     Ok(status_code)
-    
 }

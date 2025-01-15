@@ -258,7 +258,8 @@ pub fn error_user_not_found() {
 
         // Wait for user input to dismiss the error screen
         if let Event::Key(key_event) = event::read().unwrap() {
-                if key_event.kind == KeyEventKind::Press { match key_event.code {
+            if key_event.kind == KeyEventKind::Press {
+                match key_event.code {
                     KeyCode::Enter => break,
                     KeyCode::Esc => {
                         std::process::exit(0);
