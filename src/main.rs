@@ -20,33 +20,23 @@ mod menue {
     pub mod view;
 }
 
-use env_logger;
-use log::debug;
-
-//Main Funktion
+//Main function
 fn main() {
-    //Logging initialisieren
-    env_logger::init();
-
-    //Willkommensnachricht anzeigen
+    //Display welcome screen
     let first_time = view::draw_welcome_screen();
 
-    //Loop - JWT Token und Passwort Hash abfragen, danach Menü anzeigen
+    //Loop - Query JWT token and password hash, then display the menu
     loop {
-        //Abruf der BackendURL
+        //Get backend URL
         let backend_url: String = url_check::logik::get_backend_url();
-        debug!("Backend URL: {}", backend_url);
-
         let token: String;
         let password_hash: String;
-        //Login
+
         match first_time {
             Some('r') => {
-                // Registrierung aufrufen
                 (token, password_hash) = register::logik::register(&backend_url);
             }
             _ => {
-                // Login aufrufen
                 (token, password_hash) = login::logik::login(&backend_url);
             }
         }

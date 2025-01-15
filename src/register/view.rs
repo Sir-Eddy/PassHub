@@ -14,7 +14,7 @@ use ratatui::{
 use std::io::{self, stdout};
 
 pub fn draw_register_screen() -> (String, String) {
-    // Terminal initialisieren
+    // Initialize terminal
     enable_raw_mode().unwrap();
     let stdout = stdout();
     let backend = CrosstermBackend::new(stdout);
@@ -45,7 +45,7 @@ pub fn draw_register_screen() -> (String, String) {
                     )
                     .split(f.area());
 
-                // Titel
+                // Title
                 let title = Paragraph::new("Register to PassHub")
                     .style(
                         Style::default()
@@ -55,7 +55,7 @@ pub fn draw_register_screen() -> (String, String) {
                     .alignment(Alignment::Center)
                     .block(Block::default().borders(Borders::ALL).title("Register"));
 
-                // E-Mail-Eingabe
+                // Email input
                 let email_paragraph = Paragraph::new(format!("E-Mail: {}", email))
                     .style(Style::default().fg(Color::White))
                     .block(
@@ -64,7 +64,7 @@ pub fn draw_register_screen() -> (String, String) {
                             .title(if !is_password_field { "E-Mail" } else { " " }),
                     );
 
-                // Passwort-Eingabe
+                // Password input
                 let password_masked: String = "*".repeat(password.len());
                 let password_paragraph = Paragraph::new(format!("Password: {}", password_masked))
                     .style(Style::default().fg(Color::White))
@@ -74,7 +74,7 @@ pub fn draw_register_screen() -> (String, String) {
                             .title(if is_password_field { "Password" } else { " " }),
                     );
 
-                // Fehlermeldung
+                // Error message
                 let error_paragraph = Paragraph::new(error_message.clone())
                     .style(Style::default().fg(Color::Red))
                     .alignment(Alignment::Center);
@@ -86,7 +86,7 @@ pub fn draw_register_screen() -> (String, String) {
             })
             .unwrap();
 
-        // Eingaben lesen
+        // Read inputs
         if let Event::Key(key) = event::read().unwrap() {
             if key.kind == KeyEventKind::Press {
                 match key.code {
@@ -98,7 +98,7 @@ pub fn draw_register_screen() -> (String, String) {
                                 error_message = String::from(
                                     "Invalid password: Must be at least 10 characters long and include uppercase letters, lowercase letters, numbers, and special characters.",
                                 );
-                                password.clear(); // Passwort zurücksetzen
+                                password.clear(); // Reset password
                             }
                         } else {
                             is_password_field = true;
@@ -119,10 +119,10 @@ pub fn draw_register_screen() -> (String, String) {
                         }
                     }
                     KeyCode::Up => {
-                        is_password_field = false; // Fokus auf E-Mail-Feld
+                        is_password_field = false; // Focus on email field
                     }
                     KeyCode::Down => {
-                        is_password_field = true; // Fokus auf Passwort-Feld
+                        is_password_field = true; // Focus on password field
                     }
                     _ => {}
                 }
@@ -130,7 +130,7 @@ pub fn draw_register_screen() -> (String, String) {
         }
     }
 
-    // Terminal bereinigen
+    // Clean up terminal
     terminal.clear().unwrap();
     disable_raw_mode().unwrap();
     execute!(
@@ -157,7 +157,7 @@ pub fn error_argon2_fail() {
                 .borders(Borders::ALL)
                 .title("Error");
 
-            let paragraph = Paragraph::new("FATAL ERROR. Argon 2 password hashing failed. Please press Enter to exit programm.")
+            let paragraph = Paragraph::new("FATAL ERROR. Argon 2 password hashing failed. Please press Enter to exit program.")
                 .block(block);
 
             frame.render_widget(paragraph, size);
@@ -303,9 +303,9 @@ pub fn error_user_exists() {
         if let Event::Key(key_event) = event::read().unwrap() {
             match key_event.kind {
                 KeyEventKind::Press => match key_event.code {
-                    KeyCode::Enter => break, // Verlasse den Fehlerbildschirm
+                    KeyCode::Enter => break, // Exit the error screen
                     KeyCode::Esc => {
-                        std::process::exit(0); // Schließe das Programm
+                        std::process::exit(0); // Close the program
                     }
                     _ => {}
                 },

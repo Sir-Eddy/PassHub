@@ -11,11 +11,11 @@ pub fn fetch(
     jwt_token: &String,
     user_password_hash: &String,
 ) -> Result<(u16, Option<Value>), Box<dyn std::error::Error>> {
-    // HTTP-Client erstellen
+    // Create HTTP client
     let client = Client::new();
     let request_url = format!("{}/api/v1/sync/fetch", backend_url);
 
-    // API-Daten abrufen
+    // Fetch API data
     let response = client
         .get(&request_url)
         .header("Authorization", format!("Bearer {}", jwt_token))
@@ -25,19 +25,19 @@ pub fn fetch(
 
     match status_code {
         200 => {
-            // Prüfen, ob eine JSON-Antwort vorhanden ist
+            // Check if a JSON response is present
             let json_response: Option<Value> = response.json().ok();
 
-            // Wenn die JSON-Antwort leer ist, nur den Statuscode zurückgeben
+            // If the JSON response is empty, return only the status code
             if json_response.is_none() || json_response == Some(Value::Null) {
                 return Ok((status_code, None));
             }
 
-            // Base64-String aus der JSON-Antwort extrahieren
+            // Extract Base64 string from the JSON response
             let json_response = json_response.unwrap();
             let base64_data = json_response["encrypted_data"].as_str().unwrap_or("");
 
-            // Base64-Dekodierung
+            // Base64 decoding
             let decoded_data = STANDARD.decode(&base64_data)?;
 
             // Check if minimum length is met for AES-GCM decryption
@@ -45,15 +45,15 @@ pub fn fetch(
                 return Ok((status_code, None));
             }
 
-            // Benutzer-Schlüssel in Bytes umwandeln
+            // Convert user key to bytes
             let key = derive_key_from_hash(&user_password_hash);
-            let nonce = &decoded_data[..12]; // Die ersten 12 Bytes als Nonce verwenden
-            let ciphertext = &decoded_data[12..]; // Rest als Ciphertext
+            let nonce = &decoded_data[..12]; // Use the first 12 bytes as nonce
+            let ciphertext = &decoded_data[12..]; // Rest as ciphertext
 
-            // Daten entschlüsseln
+            // Decrypt data
             let decrypted_data = decrypt_aes256_gcm(&key, &nonce, &ciphertext);
 
-            // In JSON umwandeln
+            // Convert to JSON
             let json_data: Value = serde_json::from_slice(&decrypted_data)?;
 
             Ok((status_code, Some(json_data)))
@@ -64,21 +64,21 @@ pub fn fetch(
 }
 
 fn decrypt_aes256_gcm(key: &[u8], nonce: &[u8], ciphertext: &[u8]) -> Vec<u8> {
-    // AES-GCM initialisieren
+    // Initialize AES-GCM
     let cipher = Aes256Gcm::new(Key::<aes_gcm::aes::Aes256>::from_slice(key));
     let nonce = Nonce::from_slice(nonce);
 
-    // Entschlüsseln
+    // Decrypt
     cipher.decrypt(nonce, ciphertext).unwrap()
 }
 
 fn derive_key_from_hash(password_hash: &str) -> [u8; 32] {
-    // SHA256 aus dem Hash berechnen
+    // Compute SHA256 from the hash
     let mut hasher = Sha256::default();
     hasher.update(password_hash.as_bytes());
     let result = hasher.finalize();
 
-    // 32-Byte-Schlüssel zurückgeben
+    // Return 32-byte key
     let mut key = [0u8; 32];
     key.copy_from_slice(&result[..32]);
     key
@@ -90,45 +90,45 @@ pub fn update(
     user_password_hash: &String,
     json_data: &Value,
 ) -> Result<u16, Box<dyn std::error::Error>> {
-    // HTTP-Client erstellen
+    // Create HTTP client
     let client = Client::new();
     let request_url = format!("{}/api/v1/sync/update", backend_url);
 
-    // Benutzer-Schlüssel in Bytes umwandeln
+    // Convert user key to bytes
     let key = derive_key_from_hash(&user_password_hash);
 
-    // Initialisierung der Verschlüsselung
+    // Initialize encryption
     let cipher = Aes256Gcm::new(Key::<aes_gcm::aes::Aes256>::from_slice(&key));
 
-    // Nonce generieren (12 zufällige Bytes)
+    // Generate nonce (12 random bytes)
     let nonce = generate_random_nonce();
 
-    // JSON-Daten in einen String serialisieren
+    // Serialize JSON data to a string
     let json_string = serde_json::to_string(&json_data)?;
 
-    // JSON-Daten verschlüsseln
+    // Encrypt JSON data
     let ciphertext = cipher
         .encrypt(Nonce::from_slice(&nonce), json_string.as_bytes())
         .map_err(|e| format!("Encryption error: {:?}", e))?;
 
-    // Nonce und Ciphertext kombinieren
+    // Combine nonce and ciphertext
     let mut encrypted_data = nonce.to_vec();
     encrypted_data.extend(ciphertext);
 
-    // Base64-kodierte Daten erstellen
+    // Create Base64-encoded data
     let base64_data = STANDARD.encode(&encrypted_data);
 
-    // Base64-Daten in JSON-Struktur einbetten
+    // Embed Base64 data in JSON structure
     let json_request = serde_json::json!({ "encrypted_data": base64_data });
 
-    // Anfrage senden
+    // Send request
     let response = client
         .post(&request_url)
         .header("Authorization", format!("Bearer {}", jwt_token))
         .json(&json_request)
         .send()?;
 
-    // HTTP-Statuscode zurückgeben
+    // Return HTTP status code
     Ok(response.status().as_u16())
 }
 

@@ -9,22 +9,22 @@ use zeroize::Zeroize;
 
 pub fn login(backend_url: &String) -> (String, String) {
     loop {
-        // E-Mail aus dem Speicher laden
+        // Load email from storage
         let stored_email = get_mail_from_storage();
 
-        // Benutzername und Passwort abfragen
+        // Prompt for username and password
         let (email, mut cleartext_password) = view::draw_login_screen(stored_email);
 
-        // Passwort hashen
+        // Hash the password
         match hash_argon_2(&cleartext_password, &email) {
             Ok(password_hash) => {
-                cleartext_password.zeroize(); // Klartext-Passwort aus dem Speicher löschen
+                cleartext_password.zeroize(); // Clear plaintext password from memory
 
-                // Weiter mit dem Backend-Login
+                // Proceed with backend login
                 match api::login_backend(&backend_url, &email, &password_hash) {
                     Ok(token) => {
-                        save_email_to_storage(&email); // E-Mail speichern
-                        return (token, password_hash); // JWT-Token zurückgeben
+                        save_email_to_storage(&email); // Save email
+                        return (token, password_hash); // Return JWT token
                     }
                     Err(status) => {
                         match status {
@@ -38,7 +38,7 @@ pub fn login(backend_url: &String) -> (String, String) {
                 }
             }
             Err(_e) => {
-                cleartext_password.clear(); // Klartext-Passwort aus dem Speicher löschen
+                cleartext_password.clear(); // Clear plaintext password from memory
                 view::error_argon2_fail();
                 std::process::exit(1);
             }
@@ -64,19 +64,19 @@ fn hash_argon_2(password: &str, email: &str) -> Result<String, argon2::password_
 }
 
 fn get_mail_from_storage() -> String {
-    // Hol das Projektverzeichnis
+    // Get the project directory
     if let Some(proj_dirs) = ProjectDirs::from("dev", "passhub", "passhub") {
         let config_dir = proj_dirs.config_dir();
         let config_file = config_dir.join("mail.txt");
 
-        // Falls die Datei existiert, lese den Inhalt
+        // If the file exists, read its content
         if config_file.exists() {
-            let mut file = fs::File::open(&config_file).expect("Fehler beim Öffnen der Datei");
+            let mut file = fs::File::open(&config_file).expect("Error opening the file");
             let mut mail = String::new();
             file.read_to_string(&mut mail)
-                .expect("Fehler beim Lesen der Datei");
+                .expect("Error reading the file");
 
-            // Entferne Whitespaces und prüfe, ob eine URL vorhanden ist
+            // Remove whitespaces and check if an email is present
             let mail = mail.trim();
             if mail.is_empty() {
                 return String::new();
@@ -96,9 +96,9 @@ fn save_email_to_storage(email: &str) {
         let config_dir = proj_dirs.config_dir();
         let config_file = config_dir.join("mail.txt");
 
-        // Schreibe die URL in die Datei
-        let mut file = fs::File::create(&config_file).expect("Fehler beim Erstellen der Datei");
+        // Write the email to the file
+        let mut file = fs::File::create(&config_file).expect("Error creating the file");
         file.write_all(email.as_bytes())
-            .expect("Fehler beim Schreiben in die Datei");
+            .expect("Error writing to the file");
     }
 }

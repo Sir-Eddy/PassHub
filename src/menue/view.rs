@@ -262,7 +262,7 @@ pub fn display_uris(mut entries: Vec<Entry>) -> Result<Vec<Entry>, Box<dyn Error
     enable_raw_mode().unwrap();
 
     let mut show_popup = false;
-    let mut selected_index ; // Track whether the popup is displayed
+    let mut selected_index; // Track whether the popup is displayed
     let mut popup: Option<PasswordPopup> = None; // Track selected entry index
 
     loop {

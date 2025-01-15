@@ -180,7 +180,7 @@ pub fn error_unauthorized() {
                 let block = Block::default().borders(Borders::ALL).title("Error");
 
                 let paragraph = Paragraph::new(
-                    "Login failed. Please check your credentials. \n Press Enter to try again.",
+                    "Login failed. Please check your credentials. \nPress Enter to try again.",
                 )
                 .block(block);
 
@@ -216,7 +216,7 @@ pub fn error_network() {
                 let block = Block::default().borders(Borders::ALL).title("Error");
 
                 let paragraph =
-                    Paragraph::new("Network Error. \n Press Enter to try again.").block(block);
+                    Paragraph::new("Network Error. \nPress Enter to try again.").block(block);
 
                 frame.render_widget(paragraph, size);
             })
@@ -291,7 +291,7 @@ pub fn error_bad_request() {
                 let block = Block::default().borders(Borders::ALL).title("Error");
 
                 let paragraph =
-                    Paragraph::new("Invalid Payload. \n Press Enter to try again.").block(block);
+                    Paragraph::new("Invalid Payload. \nPress Enter to try again.").block(block);
 
                 frame.render_widget(paragraph, size);
             })
@@ -324,8 +324,7 @@ pub fn error_unknown() {
                 let size = frame.area();
                 let block = Block::default().borders(Borders::ALL).title("Error");
 
-                let paragraph =
-                    Paragraph::new("Unknown. \n Press Enter to try again.").block(block);
+                let paragraph = Paragraph::new("Unknown. \nPress Enter to try again.").block(block);
 
                 frame.render_widget(paragraph, size);
             })

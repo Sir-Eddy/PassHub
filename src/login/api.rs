@@ -3,7 +3,7 @@ use serde_json::json;
 
 pub fn login_backend(base_url: &str, email: &str, password_hash: &str) -> Result<String, u16> {
     let client = Client::new();
-    let url = format!("{}/api/v1/auth/login", base_url); // Kombiniere Basis-URL mit API-Endpunkt
+    let url = format!("{}/api/v1/auth/login", base_url); // Combine base URL with API endpoint
 
     let payload = json!({
         "email": email,
@@ -15,17 +15,17 @@ pub fn login_backend(base_url: &str, email: &str, password_hash: &str) -> Result
     match response {
         Ok(res) => {
             if res.status().is_success() {
-                // Erfolgreich: JSON-Token extrahieren
+                // Successful: Extract JSON token
                 let body: serde_json::Value = res.json().unwrap_or_else(|_| json!({}));
                 if let Some(token) = body.get("token").and_then(|t| t.as_str()) {
                     return Ok(token.to_string());
                 }
-                Err(500) // Falls kein Token vorhanden ist, interner Serverfehler
+                Err(500) // If no token is present, internal server error
             } else {
-                // Gib den HTTP-Statuscode bei Fehlern zurück
+                // Return the HTTP status code on errors
                 Err(res.status().as_u16())
             }
         }
-        Err(_) => Err(500), // Netzwerkfehler oder anderes Problem
+        Err(_) => Err(500), // Network error or other problem
     }
 }

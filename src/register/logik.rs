@@ -10,24 +10,24 @@ use zeroize::Zeroize;
 
 pub fn register(backend_url: &String) -> (String, String) {
     loop {
-        // Benutzername und Passwort abfragen
+        // Prompt for username and password
         let (email, mut cleartext_password) = view::draw_register_screen();
 
-        // Passwort hashen
+        // Hash the password
         match hash_argon_2(&cleartext_password, &email) {
             Ok(password_hash) => {
-                cleartext_password.zeroize(); // Klartext-Passwort aus dem Speicher löschen
+                cleartext_password.zeroize(); // Clear plaintext password from memory
 
-                // Weiter mit dem Backend-Login
+                // Proceed with backend login
                 match api::login_backend(&backend_url, &email, &password_hash) {
                     Ok(token) => {
-                        save_email_to_storage(&email); // E-Mail speichern
-                        return (token, password_hash); // JWT-Token zurückgeben
+                        save_email_to_storage(&email); // Save email
+                        return (token, password_hash); // Return JWT token
                     }
                     Err(status) => {
                         match status {
                             400 => view::error_bad_request(), // Bad request
-                            409 => view::error_user_exists(), // Allready exists
+                            409 => view::error_user_exists(), // Already exists
                             500 => view::error_network(),     // Internal server error
                             _ => view::error_unknown(),       // Unknown error
                         }
@@ -35,7 +35,7 @@ pub fn register(backend_url: &String) -> (String, String) {
                 }
             }
             Err(_e) => {
-                cleartext_password.clear(); // Klartext-Passwort aus dem Speicher löschen
+                cleartext_password.clear(); // Clear plaintext password from memory
                 view::error_argon2_fail();
                 std::process::exit(1);
             }
@@ -65,27 +65,27 @@ fn save_email_to_storage(email: &str) {
         let config_dir = proj_dirs.config_dir();
         let config_file = config_dir.join("mail.txt");
 
-        // Schreibe die URL in die Datei
-        let mut file = fs::File::create(&config_file).expect("Fehler beim Erstellen der Datei");
+        // Write the email to the file
+        let mut file = fs::File::create(&config_file).expect("Error creating file");
         file.write_all(email.as_bytes())
-            .expect("Fehler beim Schreiben in die Datei");
+            .expect("Error writing to file");
     }
 }
 
 pub fn validate_password(password: &str) -> bool {
-    // Bedingung: Passwort muss mindestens 10 Zeichen lang sein
+    // Condition: Password must be at least 10 characters long
     if password.len() < 10 {
         return false;
     }
 
-    // Regex-Kriterien für die Passwortprüfung
-    let has_uppercase = Regex::new(r"[A-Z]").unwrap().is_match(password); // Großbuchstaben
-    let has_lowercase = Regex::new(r"[a-z]").unwrap().is_match(password); // Kleinbuchstaben
-    let has_number = Regex::new(r"\d").unwrap().is_match(password); // Zahlen
+    // Regex criteria for password validation
+    let has_uppercase = Regex::new(r"[A-Z]").unwrap().is_match(password); // Uppercase letters
+    let has_lowercase = Regex::new(r"[a-z]").unwrap().is_match(password); // Lowercase letters
+    let has_number = Regex::new(r"\d").unwrap().is_match(password); // Numbers
     let has_special_char = Regex::new(r"[!@#$%^&*(),.?\:{}|<>]")
         .unwrap()
-        .is_match(password); // Sonderzeichen
+        .is_match(password); // Special characters
 
-    // Alle Kriterien müssen erfüllt sein
+    // All criteria must be met
     has_uppercase && has_lowercase && has_number && has_special_char
 }
