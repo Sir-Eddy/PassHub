@@ -19,6 +19,11 @@ mod menue {
     pub mod logik;
     pub mod view;
 }
+mod delete {
+    pub mod api;
+    pub mod logik;
+    pub mod view;
+}
 
 //Main function
 fn main() {
@@ -35,6 +40,11 @@ fn main() {
         match first_time {
             Some('r') => {
                 (token, password_hash) = register::logik::register(&backend_url);
+            }
+            Some('d') => {
+                (token, _) = login::logik::login(&backend_url);
+                delete::logik::delete(&backend_url, &token);
+                std::process::exit(1);
             }
             _ => {
                 (token, password_hash) = login::logik::login(&backend_url);

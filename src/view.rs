@@ -53,7 +53,7 @@ pub fn draw_welcome_screen() -> Option<char> {
             .alignment(Alignment::Center);
 
         // Welcome message with instructions
-        let welcome_text = Paragraph::new("Welcome to PassHub.\nPress Enter to continue.\nFirst time here? Press 'r' to register.")
+        let welcome_text = Paragraph::new("Welcome to PassHub.\nPress Enter to continue.\nFirst time here? Press 'r' to register.\nLast time here? Press 'd' to delete your account.")
             .style(
                 Style::default()
                     .fg(Color::Black),
@@ -73,6 +73,7 @@ pub fn draw_welcome_screen() -> Option<char> {
             match key.code {
                 KeyCode::Enter => break None,          // Continue without registration
                 KeyCode::Char('r') => break Some('r'), // Return 'r' for registration
+                KeyCode::Char('d') => break Some('d'), // Return 'd' for deletion
                 _ => {}
             }
         }
