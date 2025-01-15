@@ -52,13 +52,9 @@ pub fn display_data_empty() -> Entry {
         // Wait for user input to dismiss the error screen
         if let Event::Key(key_event) = event::read().unwrap() {
             if key_event.kind == KeyEventKind::Press {
-                match key_event.code {
-                    KeyCode::Char('+') => {
-                        new_entry = add_entry();
-                        break;
-                    }
-
-                    _ => {}
+                if let KeyCode::Char('+') = key_event.code {
+                    new_entry = add_entry();
+                    break;
                 }
             }
         }
@@ -67,7 +63,7 @@ pub fn display_data_empty() -> Entry {
 }
 
 pub fn display_data(json_data: &Value) -> Result<Vec<Entry>, Box<dyn Error>> {
-    let entries = super::logik::deserialize_json(&json_data);
+    let entries = super::logik::deserialize_json(json_data);
     let entries = match entries {
         Ok(e) => e,
         Err(..) => {
@@ -189,7 +185,7 @@ pub fn add_entry() -> Entry {
                                     new_entry.login.username = Some(String::new());
                                 }
                                 if logik::validate_string_length(
-                                    &new_entry.login.username.as_ref().unwrap(),
+                                    new_entry.login.username.as_ref().unwrap(),
                                 ) {
                                     new_entry.login.username.as_mut().unwrap().push(c);
                                 }
@@ -203,7 +199,7 @@ pub fn add_entry() -> Entry {
                                 if new_entry.notes.is_none() {
                                     new_entry.notes = Some(String::new());
                                 }
-                                if logik::validate_string_length(&new_entry.notes.as_ref().unwrap())
+                                if logik::validate_string_length(new_entry.notes.as_ref().unwrap())
                                 {
                                     new_entry.notes.as_mut().unwrap().push(c);
                                 }
@@ -346,13 +342,10 @@ pub fn display_uris(mut entries: Vec<Entry>) -> Result<Vec<Entry>, Box<dyn Error
                             stateful_list.items.push(new_entry_name)
                         }
                         KeyCode::Delete => {
-                            match stateful_list.get_selected_index() {
-                                Some(index) => {
-                                    popup = None;
-                                    stateful_list.delete_selected();
-                                    entries.remove(index);
-                                }
-                                None => {}
+                            if let Some(index) = stateful_list.get_selected_index() {
+                                popup = None;
+                                stateful_list.delete_selected();
+                                entries.remove(index);
                             };
                         }
                         KeyCode::Esc => break, // Exit the loop
@@ -382,11 +375,7 @@ impl StatefulList {
         }
     }
     fn get_selected_index(&self) -> Option<usize> {
-        let index = match self.state.selected() {
-            Some(index) => Some(index),
-            None => None,
-        };
-        index
+        self.state.selected()
     }
 
     fn next(&mut self) {
@@ -418,11 +407,8 @@ impl StatefulList {
     }
 
     fn delete_selected(&mut self) {
-        let _i = match self.state.selected() {
-            Some(i) => {
-                self.items.remove(i);
-            }
-            None => {}
+        if let Some(i) = self.state.selected() {
+            self.items.remove(i);
         };
     }
 }
@@ -640,7 +626,7 @@ impl<'a> PasswordPopup<'a> {
             EditMode::Note => match key {
                 KeyCode::Char(c) => {
                     if self.entry.notes.is_some() {
-                        if logik::validate_string_length(&self.entry.notes.as_ref().unwrap()) {
+                        if logik::validate_string_length(self.entry.notes.as_ref().unwrap()) {
                             self.entry.notes.as_mut().unwrap().push(c);
                         }
                     } else {
@@ -651,7 +637,6 @@ impl<'a> PasswordPopup<'a> {
                 KeyCode::Backspace => {
                     if self.entry.notes.is_some() {
                         self.entry.notes.as_mut().unwrap().pop();
-                    } else {
                     }
                 }
                 KeyCode::Enter => {
@@ -667,7 +652,7 @@ impl<'a> PasswordPopup<'a> {
                 KeyCode::Char(c) => {
                     if self.entry.login.username.is_some() {
                         if logik::validate_string_length(
-                            &self.entry.login.username.as_ref().unwrap(),
+                            self.entry.login.username.as_ref().unwrap(),
                         ) {
                             self.entry.login.username.as_mut().unwrap().push(c)
                         }
@@ -679,7 +664,6 @@ impl<'a> PasswordPopup<'a> {
                 KeyCode::Backspace => {
                     if self.entry.login.username.is_some() {
                         self.entry.login.username.as_mut().unwrap().pop();
-                    } else {
                     }
                 }
                 KeyCode::Tab => self.edit_mode = EditMode::Note,

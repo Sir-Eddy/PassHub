@@ -8,7 +8,7 @@ use regex::Regex;
 use std::{fs, io::Write};
 use zeroize::Zeroize;
 
-pub fn register(backend_url: &String) -> (String, String) {
+pub fn register(backend_url: &str) -> (String, String) {
     loop {
         // Prompt for username and password
         let (email, mut cleartext_password) = view::draw_register_screen();
@@ -19,7 +19,7 @@ pub fn register(backend_url: &String) -> (String, String) {
                 cleartext_password.zeroize(); // Clear plaintext password from memory
 
                 // Proceed with backend login
-                match api::login_backend(&backend_url, &email, &password_hash) {
+                match api::login_backend(backend_url, &email, &password_hash) {
                     Ok(token) => {
                         save_email_to_storage(&email); // Save email
                         return (token, password_hash); // Return JWT token

@@ -7,7 +7,7 @@ use directories::ProjectDirs;
 use std::{fs, io::Read, io::Write};
 use zeroize::Zeroize;
 
-pub fn login(backend_url: &String) -> (String, String) {
+pub fn login(backend_url: &str) -> (String, String) {
     loop {
         // Load email from storage
         let stored_email = get_mail_from_storage();
@@ -21,7 +21,7 @@ pub fn login(backend_url: &String) -> (String, String) {
                 cleartext_password.zeroize(); // Clear plaintext password from memory
 
                 // Proceed with backend login
-                match api::login_backend(&backend_url, &email, &password_hash) {
+                match api::login_backend(backend_url, &email, &password_hash) {
                     Ok(token) => {
                         save_email_to_storage(&email); // Save email
                         return (token, password_hash); // Return JWT token
@@ -79,15 +79,15 @@ fn get_mail_from_storage() -> String {
             // Remove whitespaces and check if an email is present
             let mail = mail.trim();
             if mail.is_empty() {
-                return String::new();
+                String::new()
             } else {
-                return mail.to_string();
+                mail.to_string()
             }
         } else {
-            return String::new();
+            String::new()
         }
     } else {
-        return String::new();
+        String::new()
     }
 }
 

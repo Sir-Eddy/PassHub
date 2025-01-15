@@ -9,7 +9,7 @@ use sha2::{Digest, Sha256};
 pub fn fetch(
     backend_url: &String,
     jwt_token: &String,
-    user_password_hash: &String,
+    user_password_hash: &str,
 ) -> Result<(u16, Option<Value>), Box<dyn std::error::Error>> {
     // Create HTTP client
     let client = Client::new();
@@ -38,7 +38,7 @@ pub fn fetch(
             let base64_data = json_response["encrypted_data"].as_str().unwrap_or("");
 
             // Base64 decoding
-            let decoded_data = STANDARD.decode(&base64_data)?;
+            let decoded_data = STANDARD.decode(base64_data)?;
 
             // Check if minimum length is met for AES-GCM decryption
             if decoded_data.len() < 12 {
@@ -46,12 +46,12 @@ pub fn fetch(
             }
 
             // Convert user key to bytes
-            let key = derive_key_from_hash(&user_password_hash);
+            let key = derive_key_from_hash(user_password_hash);
             let nonce = &decoded_data[..12]; // Use the first 12 bytes as nonce
             let ciphertext = &decoded_data[12..]; // Rest as ciphertext
 
             // Decrypt data
-            let decrypted_data = decrypt_aes256_gcm(&key, &nonce, &ciphertext);
+            let decrypted_data = decrypt_aes256_gcm(&key, nonce, ciphertext);
 
             // Convert to JSON
             let json_data: Value = serde_json::from_slice(&decrypted_data)?;
@@ -59,7 +59,7 @@ pub fn fetch(
             Ok((status_code, Some(json_data)))
         }
         401 | 500 => Ok((status_code, None)),
-        _ => return Ok((status_code, None)),
+        _ => Ok((status_code, None)),
     }
 }
 
@@ -87,7 +87,7 @@ fn derive_key_from_hash(password_hash: &str) -> [u8; 32] {
 pub fn update(
     backend_url: &String,
     jwt_token: &String,
-    user_password_hash: &String,
+    user_password_hash: &str,
     json_data: &Value,
 ) -> Result<u16, Box<dyn std::error::Error>> {
     // Create HTTP client
@@ -95,7 +95,7 @@ pub fn update(
     let request_url = format!("{}/api/v1/sync/update", backend_url);
 
     // Convert user key to bytes
-    let key = derive_key_from_hash(&user_password_hash);
+    let key = derive_key_from_hash(user_password_hash);
 
     // Initialize encryption
     let cipher = Aes256Gcm::new(Key::<aes_gcm::aes::Aes256>::from_slice(&key));
@@ -152,7 +152,6 @@ pub fn logout(backend_url: &String, jwt_token: &String) -> Result<u16, Box<dyn s
 
     let status_code = response.status().as_u16();
 
-    match status_code {
-        _ => Ok(status_code),
-    }
+    Ok(status_code)
+    
 }

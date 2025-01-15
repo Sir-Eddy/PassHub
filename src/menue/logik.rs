@@ -5,10 +5,10 @@ use serde_json::error::Category;
 use serde_json::Error;
 use serde_json::Value;
 
-pub fn main_menue(backend_url: &String, token: &String, password_hash: &String) {
+pub fn main_menue(backend_url: &String, token: &String, password_hash: &str) {
     loop {
         // Get the passwords from the backend
-        let json_data_result = api::fetch(&backend_url, &token, &password_hash);
+        let json_data_result = api::fetch(backend_url, token, password_hash);
 
         match json_data_result {
             Ok((200, Some(json_data))) => {
@@ -16,23 +16,23 @@ pub fn main_menue(backend_url: &String, token: &String, password_hash: &String) 
 
                 let json_string = serialize_json(&entries.unwrap()).unwrap();
                 let json_string = json_string.as_str();
-                let json_value: Value = match serde_json::from_str(&json_string) {
+                let json_value: Value = match serde_json::from_str(json_string) {
                     Ok(value) => value,
                     Err(..) => panic!(),
                 };
-                _ = api::update(&backend_url, &token, &password_hash, &json_value);
-                _ = api::logout(&backend_url, &token);
+                _ = api::update(backend_url, token, password_hash, &json_value);
+                _ = api::logout(backend_url, token);
             }
             Ok((200, None)) => {
                 let new_json: Entry = view::display_data_empty();
                 let new_json = vec![new_json];
                 let new_json = serialize_json(&new_json).unwrap();
                 let json_string = new_json.as_str();
-                let new_json: Value = match serde_json::from_str(&json_string) {
+                let new_json: Value = match serde_json::from_str(json_string) {
                     Ok(value) => value,
                     Err(..) => panic!(),
                 };
-                _ = api::update(&backend_url, &token, &password_hash, &new_json);
+                _ = api::update(backend_url, token, password_hash, &new_json);
             }
             Ok((401, _)) => {
                 view::update_error(401);
@@ -62,7 +62,7 @@ pub fn get_uris(json_entries: Vec<Entry>) -> Result<Vec<String>, Error> {
             uris.push(uri.uri);
         }
     }
-    return Ok(uris);
+    Ok(uris)
 }
 
 pub fn deserialize_json(json_data: &Value) -> Result<Vec<Entry>, Error> {
@@ -72,19 +72,19 @@ pub fn deserialize_json(json_data: &Value) -> Result<Vec<Entry>, Error> {
         Err(e) => match e.classify() {
             Category::Io => {
                 debug!("Failed to read or write bytes on an I/O stream");
-                return Err(e);
+                Err(e)
             }
             Category::Syntax => {
                 debug!("Input is not syntactically valid JSON");
-                return Err(e);
+                Err(e)
             }
             Category::Data => {
                 debug!("Input data is semantically incorrect");
-                return Err(e);
+                Err(e)
             }
             Category::Eof => {
                 debug!("Unexpected end of the input data");
-                return Err(e);
+                Err(e)
             }
         },
     }
@@ -98,7 +98,7 @@ pub fn serialize_json(entries: &Vec<Entry>) -> Option<String> {
             return None;
         }
     };
-    return Some(json);
+    Some(json)
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
@@ -123,11 +123,7 @@ pub struct Entry {
     pub login: Login,
 }
 
-pub fn validate_string_length(string: &String) -> bool {
+pub fn validate_string_length(string: &str) -> bool {
     let capacity: usize = 200;
-    if string.len() > capacity {
-        return false;
-    } else {
-        return true;
-    }
+    string.len() <= capacity
 }
