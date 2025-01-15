@@ -1,5 +1,5 @@
 use crossterm::{
-    event::{self, Event, KeyCode, KeyEventKind},
+    event::{self, Event, KeyCode, KeyEventKind, KeyModifiers},
     execute,
     terminal::{disable_raw_mode, enable_raw_mode, EnterAlternateScreen, LeaveAlternateScreen},
 };
@@ -19,6 +19,7 @@ use std::{
     io::{self, stdout},
     vec,
 };
+use copypasta::{ClipboardContext, ClipboardProvider};
 
 use super::logik::{self, get_uris, Entry, Login, Uri};
 
@@ -321,7 +322,7 @@ pub fn display_uris(mut entries: Vec<Entry>) -> Result<Vec<Entry>, Box<dyn Error
                                     EditMode::Name => EditMode::Uri,
                                 };
                             }
-                            _ => popup.handle_input(key.code),
+                            _ => popup.handle_input(key.code, key.modifiers),
                         }
                     }
                 } else {
@@ -597,80 +598,174 @@ impl<'a> PasswordPopup<'a> {
             .render(area, buf);
     }
 
-    pub fn handle_input(&mut self, key: KeyCode) {
+    pub fn handle_input(&mut self, key: KeyCode, modifiers: KeyModifiers) {
         match self.edit_mode {
-            EditMode::Uri => match key {
-                KeyCode::Char(c) => {
+            EditMode::Uri => match (key, modifiers) {
+                (KeyCode::Char(c), KeyModifiers::NONE | KeyModifiers::SHIFT | KeyModifiers::ALT) => {
                     if logik::validate_string_length(&self.entry.login.uris[0].uri) {
-                        self.entry.login.uris[0].uri.push(c)
+                        self.entry.login.uris[0].uri.push(c);
                     }
                 }
-                KeyCode::Backspace => {
+                //Alt Gr
+                (KeyCode::Char(c), m) if m.contains(KeyModifiers::ALT) && m.contains(KeyModifiers::CONTROL) => {
+                    if logik::validate_string_length(&self.entry.login.uris[0].uri) {
+                        self.entry.login.uris[0].uri.push(c);
+                    }
+                }
+                (KeyCode::Backspace, KeyModifiers::NONE) => {
                     self.entry.login.uris[0].uri.pop();
                 }
-                KeyCode::Tab => self.edit_mode = EditMode::Password,
-                _ => {}
-            },
-            EditMode::Password => match key {
-                KeyCode::Char(c) => {
-                    if logik::validate_string_length(&self.entry.login.password) {
-                        self.entry.login.password.push(c)
+                (KeyCode::Tab, KeyModifiers::NONE) => self.edit_mode = EditMode::Password,
+                // Copy (Ctrl + C)
+                (KeyCode::Char('c'), KeyModifiers::CONTROL) => {
+                    if let Some(uri) = self.entry.login.uris.get(0) {
+                        let uri_clone = uri.uri.clone();
+                        copy_to_clipboard(uri_clone);
                     }
                 }
-                KeyCode::Backspace => {
-                    self.entry.login.password.pop();
+                // Paste (Ctrl + V)
+                (KeyCode::Char('v'), KeyModifiers::CONTROL) => {
+                    if let Some(content) = paste_from_clipboard() {
+                        if logik::validate_string_length(&content) {
+                            self.entry.login.uris[0].uri.push_str(&content);
+                        }
+                    }
                 }
-                KeyCode::Tab => self.edit_mode = EditMode::Username,
                 _ => {}
             },
-            EditMode::Note => match key {
-                KeyCode::Char(c) => {
+            EditMode::Password => match (key, modifiers) {
+                (KeyCode::Char(c), KeyModifiers::NONE | KeyModifiers::SHIFT | KeyModifiers::ALT) => {
+                    if logik::validate_string_length(&self.entry.login.password) {
+                        self.entry.login.password.push(c);
+                    }
+                }
+                //Alt Gr
+                (KeyCode::Char(c), m) if m.contains(KeyModifiers::ALT) && m.contains(KeyModifiers::CONTROL) => {
+                    if logik::validate_string_length(&self.entry.login.uris[0].uri) {
+                        self.entry.login.uris[0].uri.push(c);
+                    }
+                }
+                (KeyCode::Backspace, KeyModifiers::NONE) => {
+                    self.entry.login.password.pop();
+                }
+                (KeyCode::Tab, KeyModifiers::NONE) => self.edit_mode = EditMode::Username,
+                // Copy (Ctrl + C)
+                (KeyCode::Char('c'), KeyModifiers::CONTROL) => {
+                    let password_clone = self.entry.login.password.clone();
+                    copy_to_clipboard(password_clone);
+                }
+                // Paste (Ctrl + V)
+                (KeyCode::Char('v'), KeyModifiers::CONTROL) => {
+                    if let Some(content) = paste_from_clipboard() {
+                        if logik::validate_string_length(&content) {
+                            self.entry.login.uris[0].uri.push_str(&content);
+                        }
+                    }
+                }
+                _ => {}
+            },
+            EditMode::Note => match (key, modifiers) {
+                (KeyCode::Char(c), KeyModifiers::NONE | KeyModifiers::SHIFT | KeyModifiers::ALT) => {
                     if self.entry.notes.is_some() {
                         if logik::validate_string_length(self.entry.notes.as_ref().unwrap()) {
                             self.entry.notes.as_mut().unwrap().push(c);
                         }
                     } else {
                         self.entry.notes = Some(String::new());
-                        self.entry.notes.as_mut().unwrap().push(c)
+                        self.entry.notes.as_mut().unwrap().push(c);
                     }
                 }
-                KeyCode::Backspace => {
+                //Alt Gr
+                (KeyCode::Char(c), m) if m.contains(KeyModifiers::ALT) && m.contains(KeyModifiers::CONTROL) => {
+                    if logik::validate_string_length(&self.entry.login.uris[0].uri) {
+                        self.entry.login.uris[0].uri.push(c);
+                    }
+                }
+                (KeyCode::Backspace, KeyModifiers::NONE) => {
                     if self.entry.notes.is_some() {
                         self.entry.notes.as_mut().unwrap().pop();
                     }
                 }
-                KeyCode::Enter => {
+                (KeyCode::Enter, KeyModifiers::NONE) => {
                     if self.entry.notes.is_none() {
                         self.entry.notes = Some(String::new());
                     }
-                    self.entry.notes.as_mut().unwrap().push('\n'); // Add a newline
+                    self.entry.notes.as_mut().unwrap().push('\n');
                 }
-                KeyCode::Tab => self.edit_mode = EditMode::Uri,
+                (KeyCode::Tab, KeyModifiers::NONE) => self.edit_mode = EditMode::Uri,
+                // Copy (Ctrl + C)
+                (KeyCode::Char('c'), KeyModifiers::CONTROL) => {
+                    if let Some(notes) = &self.entry.notes {
+                        copy_to_clipboard(notes.clone());
+                    }
+                }
+                // Paste (Ctrl + V)
+                (KeyCode::Char('v'), KeyModifiers::CONTROL) => {
+                    if let Some(content) = paste_from_clipboard() {
+                        if logik::validate_string_length(&content) {
+                            self.entry.login.uris[0].uri.push_str(&content);
+                        }
+                    }
+                }
                 _ => {}
             },
-            EditMode::Username => match key {
-                KeyCode::Char(c) => {
+            EditMode::Username => match (key, modifiers) {
+                (KeyCode::Char(c), KeyModifiers::NONE | KeyModifiers::SHIFT | KeyModifiers::ALT) => {
                     if self.entry.login.username.is_some() {
                         if logik::validate_string_length(
                             self.entry.login.username.as_ref().unwrap(),
                         ) {
-                            self.entry.login.username.as_mut().unwrap().push(c)
+                            self.entry.login.username.as_mut().unwrap().push(c);
                         }
                     } else {
                         self.entry.login.username = Some(String::new());
-                        self.entry.login.username.as_mut().unwrap().push(c)
+                        self.entry.login.username.as_mut().unwrap().push(c);
                     }
                 }
-                KeyCode::Backspace => {
+                //Alt Gr
+                (KeyCode::Char(c), m) if m.contains(KeyModifiers::ALT) && m.contains(KeyModifiers::CONTROL) => {
+                    if logik::validate_string_length(&self.entry.login.uris[0].uri) {
+                        self.entry.login.uris[0].uri.push(c);
+                    }
+                }
+                (KeyCode::Backspace, KeyModifiers::NONE) => {
                     if self.entry.login.username.is_some() {
                         self.entry.login.username.as_mut().unwrap().pop();
                     }
                 }
-                KeyCode::Tab => self.edit_mode = EditMode::Note,
+                (KeyCode::Tab, KeyModifiers::NONE) => self.edit_mode = EditMode::Note,
+                // Copy (Ctrl + C)
+                (KeyCode::Char('c'), KeyModifiers::CONTROL) => {
+                    if let Some(username) = &self.entry.login.username {
+                        copy_to_clipboard(username.clone());
+                    }
+                }
+                // Paste (Ctrl + V)
+                (KeyCode::Char('v'), KeyModifiers::CONTROL) => {
+                    if let Some(content) = paste_from_clipboard() {
+                        if logik::validate_string_length(&content) {
+                            self.entry.login.uris[0].uri.push_str(&content);
+                        }
+                    }
+                }
                 _ => {}
             },
             EditMode::None => {}
             EditMode::Name => {}
         }
+    }    
+}
+
+fn copy_to_clipboard(content: String) {
+    let mut clipboard = ClipboardContext::new().unwrap();
+    clipboard.set_contents(content).unwrap();
+}
+
+fn paste_from_clipboard() -> Option<String> {
+    if let Ok(mut clipboard) = ClipboardContext::new() {
+        if let Ok(content) = clipboard.get_contents() {
+            return Some(content);
+        }
     }
+    None
 }
