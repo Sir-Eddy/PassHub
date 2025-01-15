@@ -28,7 +28,7 @@ mod delete {
 //Main function
 fn main() {
     //Display welcome screen
-    let first_time = view::draw_welcome_screen();
+    let mut first_time = view::draw_welcome_screen();
 
     //Loop - Query JWT token and password hash, then display the menu
     loop {
@@ -40,6 +40,7 @@ fn main() {
         match first_time {
             Some('r') => {
                 (token, password_hash) = register::logik::register(&backend_url);
+                first_time = Some('l'); // Set screen to login after next logout
             }
             Some('d') => {
                 (token, _) = login::logik::login(&backend_url);

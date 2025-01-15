@@ -43,7 +43,7 @@ pub fn display_data_empty() -> Entry {
                     .title_style(Style::default().add_modifier(Modifier::BOLD));
 
                 let paragraph =
-                    Paragraph::new("No data stored. \nPlease press p to add a new password.")
+                    Paragraph::new("No data stored. \nPlease press + to add a new password.")
                         .block(block);
 
                 frame.render_widget(paragraph, size);
