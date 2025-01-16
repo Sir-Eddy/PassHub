@@ -1,6 +1,11 @@
 # PassHub CLI 🦀
 
+![Commit Activity](https://img.shields.io/github/commit-activity/w/Sir-Eddy/PassHub)
+![Language](https://img.shields.io/github/languages/top/Sir-Eddy/PassHub?color=blue)
 [![Rust](https://github.com/Sir-Eddy/PassHub/actions/workflows/rust.yml/badge.svg)](https://github.com/Sir-Eddy/PassHub/actions/workflows/rust.yml)
+![Repo Size](https://img.shields.io/github/repo-size/Sir-Eddy/PassHub)
+![Open Source](https://img.shields.io/badge/Open%20Source-%E2%9D%A4-red)
+
 
 PassHub is a user-friendly Command-Line Interface (CLI) application for accessing and managing passwords in the rsPass backend. The CLI uses the Rust library `ratatui` to provide an intuitive, terminal-based user interface.
 
