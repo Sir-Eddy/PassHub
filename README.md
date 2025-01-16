@@ -83,19 +83,19 @@ The rsPass backend must be installed, configured, and accessible. Refer to the [
 
 ## Galery
 
-![Dependency Graph](screenshot/0_.png)
+![Dependency Graph](screenshots/0_.png)
 
-![Welcome Screen](screenshot/1_Welcome_Screen.png)
+![Welcome Screen](screenshots/1_Welcome_Screen.png)
 
-![Enter Backend URL](screenshot/2_Backend_URL.png)
+![Enter Backend URL](screenshots/2_Backend_URL.png)
 
-![Login Screen](screenshot/3_Login_Screen.png)
+![Login Screen](screenshots/3_Login_Screen.png)
 
-![Main Menue](screenshot/4_Choose_Entry.png)
+![Main Menue](screenshots/4_Choose_Entry.png)
 
-![Inspect Entry](screenshot/5_Inspect_Entry.png)
+![Inspect Entry](screenshots/5_Inspect_Entry.png)
 
-![Add Password](screenshot/6_Add_Password.png)
+![Add Password](screenshots/6_Add_Password.png)
 
 
 ## Support
