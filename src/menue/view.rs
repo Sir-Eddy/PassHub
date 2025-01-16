@@ -651,8 +651,8 @@ impl<'a> PasswordPopup<'a> {
                 (KeyCode::Char(c), m)
                     if m.contains(KeyModifiers::ALT) && m.contains(KeyModifiers::CONTROL) =>
                 {
-                    if logik::validate_string_length(&self.entry.login.uris[0].uri) {
-                        self.entry.login.uris[0].uri.push(c);
+                    if logik::validate_string_length(&self.entry.login.password) {
+                        self.entry.login.password.push(c);
                     }
                 }
                 (KeyCode::Backspace, KeyModifiers::NONE) => {
@@ -668,7 +668,7 @@ impl<'a> PasswordPopup<'a> {
                 (KeyCode::Char('v'), KeyModifiers::CONTROL) => {
                     if let Some(content) = paste_from_clipboard() {
                         if logik::validate_string_length(&content) {
-                            self.entry.login.uris[0].uri.push_str(&content);
+                            self.entry.login.password.push_str(&content);
                         }
                     }
                 }
@@ -692,8 +692,13 @@ impl<'a> PasswordPopup<'a> {
                 (KeyCode::Char(c), m)
                     if m.contains(KeyModifiers::ALT) && m.contains(KeyModifiers::CONTROL) =>
                 {
-                    if logik::validate_string_length(&self.entry.login.uris[0].uri) {
-                        self.entry.login.uris[0].uri.push(c);
+                    if self.entry.notes.is_some() {
+                        if logik::validate_string_length(self.entry.notes.as_ref().unwrap()) {
+                            self.entry.notes.as_mut().unwrap().push(c);
+                        }
+                    } else {
+                        self.entry.notes = Some(String::new());
+                        self.entry.notes.as_mut().unwrap().push(c);
                     }
                 }
                 (KeyCode::Backspace, KeyModifiers::NONE) => {
@@ -717,8 +722,12 @@ impl<'a> PasswordPopup<'a> {
                 // Paste (Ctrl + V)
                 (KeyCode::Char('v'), KeyModifiers::CONTROL) => {
                     if let Some(content) = paste_from_clipboard() {
-                        if logik::validate_string_length(&content) {
-                            self.entry.login.uris[0].uri.push_str(&content);
+                        if self.entry.notes.is_some() {
+                            if logik::validate_string_length(&content) {
+                                self.entry.notes.as_mut().unwrap().push_str(&content);
+                            }
+                        } else {
+                            self.entry.notes = Some(content);
                         }
                     }
                 }
@@ -744,8 +753,15 @@ impl<'a> PasswordPopup<'a> {
                 (KeyCode::Char(c), m)
                     if m.contains(KeyModifiers::ALT) && m.contains(KeyModifiers::CONTROL) =>
                 {
-                    if logik::validate_string_length(&self.entry.login.uris[0].uri) {
-                        self.entry.login.uris[0].uri.push(c);
+                    if self.entry.login.username.is_some() {
+                        if logik::validate_string_length(
+                            self.entry.login.username.as_ref().unwrap(),
+                        ) {
+                            self.entry.login.username.as_mut().unwrap().push(c);
+                        }
+                    } else {
+                        self.entry.login.username = Some(String::new());
+                        self.entry.login.username.as_mut().unwrap().push(c);
                     }
                 }
                 (KeyCode::Backspace, KeyModifiers::NONE) => {
@@ -763,8 +779,17 @@ impl<'a> PasswordPopup<'a> {
                 // Paste (Ctrl + V)
                 (KeyCode::Char('v'), KeyModifiers::CONTROL) => {
                     if let Some(content) = paste_from_clipboard() {
-                        if logik::validate_string_length(&content) {
-                            self.entry.login.uris[0].uri.push_str(&content);
+                        if self.entry.login.username.is_some() {
+                            if logik::validate_string_length(&content) {
+                                self.entry
+                                    .login
+                                    .username
+                                    .as_mut()
+                                    .unwrap()
+                                    .push_str(&content);
+                            }
+                        } else {
+                            self.entry.login.username = Some(content);
                         }
                     }
                 }
