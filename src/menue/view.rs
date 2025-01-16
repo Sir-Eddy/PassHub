@@ -576,10 +576,14 @@ impl<'a> PasswordPopup<'a> {
                 ]));
             }
         } else {
-            // When Notes is None
             content.lines.push(Line::from(vec![
                 Span::raw("Notes: "),
-                Span::styled("(none)", Style::default().fg(Color::Rgb(255, 163, 26))),
+                if matches!(self.edit_mode, EditMode::Note) {
+                    Span::styled("(none)", Style::default().fg(Color::Rgb(255, 163, 26)))
+                }
+                else {
+                    Span::styled("(none)", Style::default())
+                }
             ]));
         }
 
