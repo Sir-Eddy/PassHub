@@ -11,30 +11,40 @@ env:
   CARGO_TERM_COLOR: always
 
 jobs:
-  build-linux:
-    runs-on: ubuntu-latest
-    steps:
-    - uses: actions/checkout@v4
-    - name: Build for Linux
-      run: cargo build --verbose --release
-    - name: Upload Linux binary artefact
-      uses: actions/upload-artifact@v3
-      with:
-        name: passhub_for_rspass_linux
-        path: target/release/passhub_for_rspass
+  build-and-release:
+    strategy:
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
 
-  build-windows:
-    runs-on: windows-latest
     steps:
     - uses: actions/checkout@v4
-    - name: Install Rust
-      run: rustup install stable
-    - name: Set up MSVC toolchain
+
+    - name: Set up Rust for Windows
+      if: matrix.os == 'windows-latest'
       run: rustup default stable-x86_64-pc-windows-msvc
-    - name: Build for Windows
+
+    - name: Build project
       run: cargo build --verbose --release
-    - name: Upload Windows binary artefact
-      uses: actions/upload-artifact@v3
+
+    - name: Create GitHub Release
+      id: create_release
+      if: always()
+      uses: actions/create-release@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.MY_GITHUB_TOKEN }}
       with:
-        name: passhub_for_rspass_windows
-        path: target/release/passhub_for_rspass.exe
+        tag_name: v1.0.${{ github.run_number }}-${{ matrix.os == 'windows-latest' && 'WIN' || 'LNX' }}
+        release_name: "1.0.${{ github.run_number }}-${{ matrix.os == 'windows-latest' && 'WIN' || 'LNX' }}"
+        draft: false
+        prerelease: false
+
+    - name: Upload Binary
+      uses: actions/upload-release-asset@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.MY_GITHUB_TOKEN }}
+      with:
+        upload_url: ${{ steps.create_release.outputs.upload_url }}
+        asset_path: ${{ matrix.os == 'windows-latest' && 'target/release/passhub_for_rspass.exe' || 'target/release/passhub_for_rspass' }}
+        asset_name: ${{ matrix.os == 'windows-latest' && 'passhub_for_rspass_windows.exe' || 'passhub_for_rspass_linux' }}
+        asset_content_type: application/octet-stream

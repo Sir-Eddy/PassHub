@@ -1,95 +1,87 @@
 # PassHub CLI 🦀
 
-PassHub ist eine benutzerfreundliche Kommandozeilenanwendung (CLI) für den Zugriff und die Verwaltung von Passwörtern im rsPass-Backend. Die CLI nutzt das Rust-Bibliothekspaket `ratatui`, um eine intuitive, terminalbasierte Benutzeroberfläche bereitzustellen.
+![Commit Activity](https://img.shields.io/github/commit-activity/w/Sir-Eddy/PassHub)
+![Language](https://img.shields.io/github/languages/top/Sir-Eddy/PassHub?color=blue)
+[![Rust](https://github.com/Sir-Eddy/PassHub/actions/workflows/rust.yml/badge.svg)](https://github.com/Sir-Eddy/PassHub/actions/workflows/rust.yml)
+![Repo Size](https://img.shields.io/github/repo-size/Sir-Eddy/PassHub)
+![Open Source](https://img.shields.io/badge/Open%20Source-%E2%9D%A4-red)
 
-## Funktionen
 
-**Passwortverwaltung**  
-Greifen Sie auf Ihre Passwörter zu, erstellen Sie neue Einträge und bearbeiten oder löschen Sie bestehende Einträge in Ihrem rsPass-Backend.
+PassHub is a user-friendly Command-Line Interface (CLI) application for accessing and managing passwords in the rsPass backend. The CLI uses the Rust library `ratatui` to provide an intuitive, terminal-based user interface.
 
-**Sichere Authentifizierung**  
-Verwenden Sie JSON Web Tokens (JWT) für eine sichere Anmeldung und API-Kommunikation.
+## Features
 
-**Account-Erstellung**  
-Erstellen Sie direkt über die CLI einen neuen Account. Ein bestehender Account ist nicht erforderlich.
+**Password Management**  
+Access your passwords, create new entries, and edit or delete existing ones in your rsPass backend.
 
-**Intuitive Benutzeroberfläche**  
-Profitieren Sie von einer terminalbasierten Oberfläche, die durch `ratatui` bereitgestellt wird, um eine einfache und interaktive Bedienung zu ermöglichen.
+**Account Creation**  
+Create a new account directly through the CLI—no prior account is required.
 
-**Integration mit rsPass**  
-Kommunizieren Sie nahtlos mit Ihrem rsPass-Backend, das über HTTPS gesichert ist.
+**Intuitive User Interface**  
+Leverages a terminal-based interface provided by `ratatui` for easy and interactive navigation.
 
-**Passwortgenerator**  
-Erstellen Sie sichere und zufällige Passwörter direkt in der CLI.
+**Integration with rsPass**  
+Seamlessly communicate with your rsPass backend secured via HTTPS.
 
-## Sicherheit
+## Security
 
-**Argon2id-Hashing**  
-Passwörter werden sofort nach der Eingabe mit Argon2id gehashed. Das Klartextpasswort wird niemals gespeichert und direkt mit `zeroize()` entfernt.
+**Argon2id Hashing**  
+Argon2id is a highly secure password hashing algorithm, resistant to GPU attacks and optimized for both memory-hardness and speed. Your master password is hashed immediately upon input and never stored in plaintext. The plaintext password is securely erased from memory using `zeroize()`.
 
-**AES-256-GCM-Verschlüsselung**  
-Alle Datenübertragungen erfolgen über AES-256-GCM.
+**AES-256-GCM Encryption**  
+AES-256-GCM is a state-of-the-art encryption standard that ensures data integrity and confidentiality. All communications with the backend are encrypted, protecting your sensitive information from eavesdropping.
 
-**Strenge Passwort-Richtlinien**  
-Das Masterpasswort muss strenge Sicherheitsrichtlinien erfüllen.
+**Strict Password Policies**  
+The master password must meet stringent requirements to ensure high entropy and resistance to brute-force attacks.
 
-**Regelmäßiger Login**  
-Eine erneute Anmeldung ist jede Stunde erforderlich, um die Sicherheit zu gewährleisten.
+**Regular Login**  
+For enhanced security, reauthentication is required every hour. This reduces the window of opportunity for unauthorized access in case of session hijacking.
 
-## Voraussetzungen
+**JWT Authentication**  
+JSON Web Tokens (JWT) are used to authenticate users and maintain secure communication with the backend. Tokens are stored only in memory during runtime to minimize their exposure to external threats.
 
-**Laufender rsPass-Backend-Server**  
-Das rsPass-Backend muss installiert, konfiguriert und erreichbar sein. Eine Anleitung finden Sie im [rsPass-Backend-Repository](https://github.com/Letgamer/rsPass).
+## Requirements
 
-**Rust-Umgebung**  
-Die CLI wurde mit Rust entwickelt. Stellen Sie sicher, dass Rust und Cargo installiert sind, um PassHub auszuführen.
+**Running rsPass Backend Server**  
+The rsPass backend must be installed, configured, and accessible. Refer to the [rsPass backend repository](https://github.com/Letgamer/rsPass) for setup instructions.
 
 ## Installation
 
-1. **Repository klonen**:  
+1. **Download the CLI**  
+   Visit the [Releases](https://github.com/Sir-Eddy/PassHub/releases) page and download the appropriate binary for your operating system:  
+   - **Linux**: `passhub_for_rspass_linux`  
+   - **Windows**: `passhub_for_rspass_windows.exe`
+
+2. **Set Executable Permissions (Linux only)**  
+   After downloading the Linux binary, make it executable by running:  
    ```bash
-   git clone https://github.com/Sir-Eddy/PassHub.git
-   cd PassHub
+   chmod +x passhub_for_rspass_linux
    ```
 
-2. **Abhängigkeiten installieren**:  
-   ```bash
-   cargo build --release
-   ```
+3. **Run the Application**  
+   Execute the downloaded binary:  
+   - On Linux:  
+     ```bash
+     ./passhub_for_rspass_linux
+     ```
+   - On Windows:  
+     ```cmd
+     passhub_for_rspass_windows.exe
+     ```
 
-3. **Programm ausführen**:  
-   ```bash
-   ./target/release/passhub
-   ```
+4. **First-Time Configuration**  
+   - **Set Backend URL**: On the first launch, you will be prompted to enter the URL of your rsPass backend.  
+   - **Login or Register**: Provide your credentials or create a new account to start using the CLI.
 
-## Konfiguration
+## Configuration
 
-1. **Backend-URL eingeben**:  
-   Beim ersten Start der CLI werden Sie aufgefordert, die URL Ihres rsPass-Backends anzugeben.
+1. **Set the Backend URL**  
+   On first launch, the CLI will prompt you to enter the URL of your rsPass backend.
 
-2. **Anmeldung durchführen**:  
-   Geben Sie Ihre Anmeldedaten ein, um einen JWT zu erhalten. Dieser wird sicher gespeichert.
+2. **Login / Register**  
+   Provide your credentials or create a new account to obtain a JWT, which will be stored in main memory on runtime.
 
-## Nutzung
-
-**Starten der CLI**  
-Führen Sie das Programm mit folgendem Befehl aus:  
-```bash
-./passhub
-```
-
-**Passwort abrufen**  
-Navigieren Sie durch Ihre gespeicherten Passwörter und kopieren Sie Einträge bei Bedarf.
-
-**Neues Passwort hinzufügen**  
-Erstellen Sie neue Einträge direkt über die Benutzeroberfläche.
-
-**Passwort generieren**  
-Verwenden Sie die integrierte Passwortgenerator-Funktion, um sichere Passwörter zu erstellen.
-
-**Token-Erneuerung**  
-PassHub erneuert JWTs automatisch, solange die CLI aktiv ist. Wenn ein Token abläuft, werden Sie zur erneuten Anmeldung aufgefordert.
 
 ## Support
 
-Falls Sie Fragen oder Probleme haben, erstellen Sie bitte ein Issue im [GitHub-Repository](https://github.com/Sir-Eddy/PassHub/issues).
+If you have any questions or issues, please open an issue in the [GitHub Repository](https://github.com/Sir-Eddy/PassHub/issues).
