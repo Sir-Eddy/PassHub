@@ -55,8 +55,7 @@ pub fn draw_welcome_screen() -> Option<char> {
         // Welcome message with instructions
         let welcome_text = Paragraph::new("Welcome to PassHub.\nPress Enter to continue.\nFirst time here? Press 'r' to register.\nLast time here? Press 'd' to delete your account.")
             .style(
-                Style::default()
-                    .fg(Color::Black),
+                Style::default(),
             )
             .alignment(Alignment::Center);
 
