@@ -27,48 +27,24 @@ jobs:
     - name: Build project
       run: cargo build --verbose --release
 
-    - name: Create GitHub Release for Linux
-      if: ${{ matrix.os == 'ubuntu-latest' }}
-      id: create_linux_release
+    - name: Create GitHub Release
+      id: create_release
+      if: always()
       uses: actions/create-release@v1
       env:
         GITHUB_TOKEN: ${{ secrets.MY_GITHUB_TOKEN }}
       with:
-        tag_name: v1.0.${{ github.run_number }}-LNX
-        release_name: "1.0.${{ github.run_number }}-LNX"
+        tag_name: v1.0.${{ github.run_number }}-${{ matrix.os == 'windows-latest' && 'WIN' || 'LNX' }}
+        release_name: "1.0.${{ github.run_number }}-${{ matrix.os == 'windows-latest' && 'WIN' || 'LNX' }}"
         draft: false
         prerelease: false
 
-    - name: Create GitHub Release for Windows
-      if: ${{ matrix.os == 'windows-latest' }}
-      id: create_windows_release
-      uses: actions/create-release@v1
-      env:
-        GITHUB_TOKEN: ${{ secrets.MY_GITHUB_TOKEN }}
-      with:
-        tag_name: v1.0.${{ github.run_number }}-WIN
-        release_name: "1.0.${{ github.run_number }}-WIN"
-        draft: false
-        prerelease: false
-
-    - name: Upload Linux Binary
-      if: matrix.os == 'ubuntu-latest'
+    - name: Upload Binary
       uses: actions/upload-release-asset@v1
       env:
         GITHUB_TOKEN: ${{ secrets.MY_GITHUB_TOKEN }}
       with:
-        upload_url: ${{ steps.create_linux_release.outputs.upload_url }}
-        asset_path: target/release/passhub_for_rspass
-        asset_name: passhub_for_rspass_linux
-        asset_content_type: application/octet-stream
-
-    - name: Upload Windows Binary
-      if: matrix.os == 'windows-latest'
-      uses: actions/upload-release-asset@v1
-      env:
-        GITHUB_TOKEN: ${{ secrets.MY_GITHUB_TOKEN }}
-      with:
-        upload_url: ${{ steps.create_windows_release.outputs.upload_url }}
-        asset_path: target/release/passhub_for_rspass.exe
-        asset_name: passhub_for_rspass_windows.exe
+        upload_url: ${{ steps.create_release.outputs.upload_url }}
+        asset_path: ${{ matrix.os == 'windows-latest' && 'target/release/passhub_for_rspass.exe' || 'target/release/passhub_for_rspass' }}
+        asset_name: ${{ matrix.os == 'windows-latest' && 'passhub_for_rspass_windows.exe' || 'passhub_for_rspass_linux' }}
         asset_content_type: application/octet-stream
