@@ -11,6 +11,7 @@ use ratatui::{
     layout::{Constraint, Direction, Layout, Rect},
     style::{Color, Modifier, Style},
     text::{Line, Span, Text},
+    prelude::Alignment,
     widgets::{Block, Borders, Clear, List, ListItem, ListState, Paragraph, Widget, Wrap},
     Terminal,
 };
@@ -167,7 +168,30 @@ pub fn add_entry() -> Entry {
                 match key.code {
                     KeyCode::Up => popup_fields.previous(),
                     KeyCode::Down => popup_fields.next(),
-                    KeyCode::Enter => break, // Finalize entry
+                    KeyCode::Enter => {
+                        if popup_fields.state.selected() == Some(4) {
+                            if new_entry.notes.is_none() {
+                                new_entry.notes = Some(String::new());
+                            }
+                            new_entry.notes.as_mut().unwrap().push('\n');
+                        } else if new_entry.name.is_empty() {
+                            // Ensure the name field is mandatory
+                            terminal
+                                .draw(|f| {
+                                    let size = f.area();
+                                    let popup = Paragraph::new("Name cannot be empty!")
+                                        .block(Block::default().borders(Borders::ALL))
+                                        .alignment(Alignment::Center);
+                                    f.render_widget(popup, size);
+                                })
+                                .unwrap();
+                            std::thread::sleep(std::time::Duration::from_secs(2));
+                        } else {
+                            break; // Exit if name is not empty
+                        }
+                    }
+
+                    , // Finalize entry
                     KeyCode::Char(c) => {
                         // Edit the selected field
                         match popup_fields.state.selected() {
