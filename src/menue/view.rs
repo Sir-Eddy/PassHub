@@ -283,7 +283,7 @@ pub fn display_uris(mut entries: Vec<Entry>) -> Result<Vec<Entry>, Box<dyn Error
                     .borders(ratatui::widgets::Borders::ALL)
                     .border_style(Style::default().fg(Color::Rgb(255, 163, 26)))
                     .title("PassHub")
-                    .title_bottom("Add entry (+), delete entry (DEL), log out (ESC), navigate (arrow keys)")
+                    .title_bottom("Add entry (+), delete entry (DEL), save and log out (ESC), navigate (arrow keys)")
                     .title_style(Style::default()
                     .add_modifier(Modifier::BOLD)))
                     .highlight_style(Style::default().fg(Color::Rgb(255, 163, 26)))
