@@ -11,30 +11,51 @@ env:
   CARGO_TERM_COLOR: always
 
 jobs:
-  build-linux:
-    runs-on: ubuntu-latest
+  build-and-release:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ubuntu-latest, windows-latest]
     steps:
     - uses: actions/checkout@v4
-    - name: Build for Linux
-      run: cargo build --verbose --release
-    - name: Upload Linux binary artefact
-      uses: actions/upload-artifact@v3
-      with:
-        name: passhub_for_rspass_linux
-        path: target/release/passhub_for_rspass
 
-  build-windows:
-    runs-on: windows-latest
-    steps:
-    - uses: actions/checkout@v4
-    - name: Install Rust
+    - name: Install Rust (Windows only)
+      if: matrix.os == 'windows-latest'
       run: rustup install stable
-    - name: Set up MSVC toolchain
+
+    - name: Set up MSVC toolchain (Windows only)
+      if: matrix.os == 'windows-latest'
       run: rustup default stable-x86_64-pc-windows-msvc
-    - name: Build for Windows
+
+    - name: Build project
       run: cargo build --verbose --release
-    - name: Upload Windows binary artefact
+
+    - name: Determine output binary name
+      id: output-name
+      run: echo "output_name=passhub_for_rspass${{ matrix.os == 'windows-latest' && '.exe' || '' }}" >> $GITHUB_ENV
+
+    - name: Upload build artifact
       uses: actions/upload-artifact@v3
       with:
-        name: passhub_for_rspass_windows
-        path: target/release/passhub_for_rspass.exe
+        name: ${{ env.output_name }}
+        path: target/release/${{ env.output_name }}
+
+    - name: Create GitHub Release
+      uses: actions/create-release@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.MY_GITHUB_TOKEN }}
+      with:
+        tag_name: ${{ github.run_number }}
+        release_name: "Release ${{ github.run_number }}"
+        draft: false
+        prerelease: false
+
+    - name: Upload to GitHub Release
+      uses: actions/upload-release-asset@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.MY_GITHUB_TOKEN }}
+      with:
+        upload_url: ${{ steps.create-release.outputs.upload_url }}
+        asset_path: target/release/${{ env.output_name }}
+        asset_name: ${{ env.output_name }}
+        asset_content_type: application/octet-stream
