@@ -83,20 +83,9 @@ The rsPass backend must be installed, configured, and accessible. Refer to the [
 2. **Login / Register**  
    Provide your credentials or create a new account to obtain a JWT, which will be stored in main memory on runtime.
 
-## Galery
+## Dependencies
 
 ![Dependency Graph](screenshots/0_.png)
-
-![Enter Backend URL](screenshots/2_Backend_URL.png)
-
-![Login Screen](screenshots/3_Login_Screen.png)
-
-![Main Menue](screenshots/4_Choose_Entry.png)
-
-![Inspect Entry](screenshots/5_Inspect_Entry.png)
-
-![Add Password](screenshots/6_Add_Password.png)
-
 
 ## Support
 
