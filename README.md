@@ -9,7 +9,7 @@
 
 PassHub is a user-friendly Command-Line Interface (CLI) application for accessing and managing passwords in the rsPass backend. The CLI uses the Rust library `ratatui` to provide an intuitive, terminal-based user interface.
 
-![Welcome Screen](screenshots/1_Welcome_Screen.png)
+![Welcome Screen](screenshots/1_Welcome_Screen-modified.png)
 
 ## Features
 
