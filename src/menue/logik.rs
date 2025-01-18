@@ -12,16 +12,19 @@ pub fn main_menue(backend_url: &String, token: &String, password_hash: &str) {
 
         match json_data_result {
             Ok((200, Some(json_data))) => {
-                let entries = view::display_data(&json_data);
+                let entry_return = view::display_data(&json_data).unwrap();
+                let entries = entry_return.0;
 
-                let json_string = serialize_json(&entries.unwrap()).unwrap();
+                let json_string = serialize_json(&entries).unwrap();
                 let json_string = json_string.as_str();
                 let json_value: Value = match serde_json::from_str(json_string) {
                     Ok(value) => value,
                     Err(..) => panic!(),
                 };
                 _ = api::update(backend_url, token, password_hash, &json_value);
-                _ = api::logout(backend_url, token);
+                if entry_return.1 == true {
+                    _ = api::logout(backend_url, token);
+                }
             }
             Ok((200, None)) => {
                 let new_json: Entry = view::display_data_empty();
