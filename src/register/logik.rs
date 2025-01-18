@@ -50,7 +50,7 @@ fn hash_argon_2_master_key(
     email: &str,
 ) -> Result<String, argon2::password_hash::Error> {
     let salt = SaltString::encode_b64(email.as_bytes())?;
-    let params = Params::new(65536, 3, 1, None)?; // 64 MiB, 3 iterations, 1 lane/thread
+    let params = Params::new(65536, 3, 4, None)?; // 64 MiB, 3 iterations, 4 lane/thread
     let argon2 = Argon2::new(Algorithm::Argon2id, Version::V0x13, params);
 
     // Hash the password
@@ -70,7 +70,7 @@ fn hash_argon_2_master_password_hash(
     master_password: &str,
 ) -> Result<String, argon2::password_hash::Error> {
     let salt = SaltString::encode_b64(master_password.as_bytes())?;
-    let params = Params::new(65536, 3, 1, None)?; // 64 MiB, 3 iterations, 1 lane/thread
+    let params = Params::new(65536, 3, 4, None)?; // 64 MiB, 3 iterations, 4 lane/thread
     let argon2 = Argon2::new(Algorithm::Argon2id, Version::V0x13, params);
 
     // Hash the password
