@@ -9,9 +9,9 @@ use ratatui::{
     backend::CrosstermBackend,
     buffer::Buffer,
     layout::{Constraint, Direction, Layout, Rect},
+    prelude::Alignment,
     style::{Color, Modifier, Style},
     text::{Line, Span, Text},
-    prelude::Alignment,
     widgets::{Block, Borders, Clear, List, ListItem, ListState, Paragraph, Widget, Wrap},
     Terminal,
 };
@@ -22,7 +22,10 @@ use std::{
     vec,
 };
 
-use super::logik::{self, get_uris, Entry, Login, Uri};
+use super::{
+    api,
+    logik::{self, get_uris, Entry, Login, Uri},
+};
 
 pub fn display_data_empty() -> Entry {
     // Setup terminal for error screen
@@ -64,7 +67,7 @@ pub fn display_data_empty() -> Entry {
     new_entry
 }
 
-pub fn display_data(json_data: &Value) -> Result<Vec<Entry>, Box<dyn Error>> {
+pub fn display_data(json_data: &Value) -> Result<(Vec<Entry>, bool), Box<dyn Error>> {
     let entries = super::logik::deserialize_json(json_data);
     let entries = match entries {
         Ok(e) => e,
@@ -268,7 +271,8 @@ pub fn add_entry() -> Entry {
     new_entry
 }
 
-pub fn display_uris(mut entries: Vec<Entry>) -> Result<Vec<Entry>, Box<dyn Error>> {
+pub fn display_uris(mut entries: Vec<Entry>) -> Result<(Vec<Entry>, bool), Box<dyn Error>> {
+    let mut to_save: bool = false;
     let name_list = entries
         .iter()
         .map(|item| item.name.clone())
@@ -335,7 +339,10 @@ pub fn display_uris(mut entries: Vec<Entry>) -> Result<Vec<Entry>, Box<dyn Error
                 if show_popup {
                     if let Some(popup) = popup.as_mut() {
                         match key.code {
-                            KeyCode::Esc => show_popup = false,
+                            KeyCode::Esc => {
+                                show_popup = false;
+                                break;
+                            }
                             KeyCode::Tab => {
                                 popup.edit_mode = match popup.edit_mode {
                                     EditMode::None => EditMode::Uri,
@@ -364,16 +371,21 @@ pub fn display_uris(mut entries: Vec<Entry>) -> Result<Vec<Entry>, Box<dyn Error
                             let new_entry_name = new_entry.name.clone();
                             popup = None;
                             entries.push(new_entry);
-                            stateful_list.items.push(new_entry_name)
+                            stateful_list.items.push(new_entry_name);
+                            break;
                         }
                         KeyCode::Delete => {
                             if let Some(index) = stateful_list.get_selected_index() {
                                 popup = None;
                                 stateful_list.delete_selected();
                                 entries.remove(index);
+                                break;
                             };
                         }
-                        KeyCode::Esc => break, // Exit the loop
+                        KeyCode::Esc => {
+                            to_save = true;
+                            break;
+                        } // Exit the loop
                         _ => {}
                     }
                 }
@@ -384,7 +396,7 @@ pub fn display_uris(mut entries: Vec<Entry>) -> Result<Vec<Entry>, Box<dyn Error
     disable_raw_mode().unwrap();
     terminal.clear()?;
 
-    Ok(entries)
+    Ok((entries, to_save))
 }
 
 struct StatefulList {
@@ -604,10 +616,9 @@ impl<'a> PasswordPopup<'a> {
                 Span::raw("Notes: "),
                 if matches!(self.edit_mode, EditMode::Note) {
                     Span::styled("(none)", Style::default().fg(Color::Rgb(255, 163, 26)))
-                }
-                else {
+                } else {
                     Span::styled("(none)", Style::default())
-                }
+                },
             ]));
         }
 
