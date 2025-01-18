@@ -22,10 +22,7 @@ use std::{
     vec,
 };
 
-use super::{
-    api,
-    logik::{self, get_uris, Entry, Login, Uri},
-};
+use super::logik::{self, get_uris, Entry, Login, Uri};
 
 pub fn display_data_empty() -> Entry {
     // Setup terminal for error screen
@@ -340,7 +337,6 @@ pub fn display_uris(mut entries: Vec<Entry>) -> Result<(Vec<Entry>, bool), Box<d
                     if let Some(popup) = popup.as_mut() {
                         match key.code {
                             KeyCode::Esc => {
-                                show_popup = false;
                                 break;
                             }
                             KeyCode::Tab => {
@@ -369,14 +365,12 @@ pub fn display_uris(mut entries: Vec<Entry>) -> Result<(Vec<Entry>, bool), Box<d
                             terminal.clear()?;
                             let new_entry: Entry = add_entry();
                             let new_entry_name = new_entry.name.clone();
-                            popup = None;
                             entries.push(new_entry);
                             stateful_list.items.push(new_entry_name);
                             break;
                         }
                         KeyCode::Delete => {
                             if let Some(index) = stateful_list.get_selected_index() {
-                                popup = None;
                                 stateful_list.delete_selected();
                                 entries.remove(index);
                                 break;
