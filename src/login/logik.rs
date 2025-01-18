@@ -30,13 +30,14 @@ pub fn login(backend_url: &str) -> (String, String) {
                     }
                     Err(status) => {
                         match status {
-                            400 => view::error_bad_request(),    // Bad request
-                            401 => view::error_unauthorized(),   // Unauthorized
+                            400 => view::error_bad_request(),  // Bad request
+                            401 => view::error_unauthorized(), // Unauthorized
                             404 => {
-                                    master_key.zeroize();
-                                    view::error_user_not_found();}, // Not found
-                            500 => view::error_network(),        // Internal server error
-                            _ => view::error_unknown(),          // Unknown error
+                                master_key.zeroize();
+                                view::error_user_not_found();
+                            } // Not found
+                            500 => view::error_network(),      // Internal server error
+                            _ => view::error_unknown(),        // Unknown error
                         }
                     }
                 }

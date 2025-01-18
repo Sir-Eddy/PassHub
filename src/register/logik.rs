@@ -31,7 +31,8 @@ pub fn register(backend_url: &str) -> (String, String) {
                             400 => view::error_bad_request(), // Bad request
                             409 => {
                                 master_key.zeroize();
-                                view::error_user_exists();}, // Already exists
+                                view::error_user_exists();
+                            } // Already exists
                             500 => view::error_network(),     // Internal server error
                             _ => view::error_unknown(),       // Unknown error
                         }
