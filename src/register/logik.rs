@@ -15,7 +15,7 @@ pub fn register(backend_url: &str) -> (String, String) {
 
         // Hash the password
         match hash_argon_2_master_key(&cleartext_password, &email) {
-            Ok(master_key) => {
+            Ok(mut master_key) => {
                 let master_password_hash =
                     hash_argon_2_master_password_hash(&master_key, &cleartext_password);
                 cleartext_password.zeroize(); // Clear plaintext password from memory
@@ -29,7 +29,9 @@ pub fn register(backend_url: &str) -> (String, String) {
                     Err(status) => {
                         match status {
                             400 => view::error_bad_request(), // Bad request
-                            409 => view::error_user_exists(), // Already exists
+                            409 => {
+                                master_key.zeroize();
+                                view::error_user_exists();}, // Already exists
                             500 => view::error_network(),     // Internal server error
                             _ => view::error_unknown(),       // Unknown error
                         }

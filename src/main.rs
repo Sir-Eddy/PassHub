@@ -1,3 +1,5 @@
+use zeroize::Zeroize;
+
 mod view;
 mod url_check {
     pub mod api;
@@ -35,7 +37,7 @@ fn main() {
         //Get backend URL
         let backend_url: String = url_check::logik::get_backend_url();
         let token: String;
-        let master_key: String;
+        let mut master_key: String;
 
         match first_time {
             Some('r') => {
@@ -43,14 +45,15 @@ fn main() {
                 first_time = Some('l'); // Set screen to login after next logout
             }
             Some('d') => {
-                (token, _) = login::logik::login(&backend_url);
+                (token, master_key) = login::logik::login(&backend_url);
                 delete::logik::delete(&backend_url, &token);
+                master_key.zeroize();
                 std::process::exit(0);
             }
             _ => {
                 (token, master_key) = login::logik::login(&backend_url);
             }
         }
-        menue::logik::main_menue(&backend_url, &token, &master_key);
+        menue::logik::main_menue(&backend_url, &token, master_key);
     }
 }

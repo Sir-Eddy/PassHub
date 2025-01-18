@@ -17,7 +17,7 @@ pub fn login(backend_url: &str) -> (String, String) {
 
         // Hash the password
         match hash_argon_2_master_key(&cleartext_password, &email) {
-            Ok(master_key) => {
+            Ok(mut master_key) => {
                 let master_password_hash =
                     hash_argon_2_master_password_hash(&master_key, &cleartext_password);
                 cleartext_password.zeroize(); // Clear plaintext password from memory
@@ -32,7 +32,9 @@ pub fn login(backend_url: &str) -> (String, String) {
                         match status {
                             400 => view::error_bad_request(),    // Bad request
                             401 => view::error_unauthorized(),   // Unauthorized
-                            404 => view::error_user_not_found(), // Not found
+                            404 => {
+                                    master_key.zeroize();
+                                    view::error_user_not_found();}, // Not found
                             500 => view::error_network(),        // Internal server error
                             _ => view::error_unknown(),          // Unknown error
                         }
@@ -40,7 +42,7 @@ pub fn login(backend_url: &str) -> (String, String) {
                 }
             }
             Err(_e) => {
-                cleartext_password.clear(); // Clear plaintext password from memory
+                cleartext_password.zeroize();
                 view::error_argon2_fail();
                 std::process::exit(1);
             }

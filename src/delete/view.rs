@@ -35,9 +35,6 @@ pub fn draw_delete_screen() {
             if key_event.kind == KeyEventKind::Press {
                 match key_event.code {
                     KeyCode::Enter => break,
-                    KeyCode::Esc => {
-                        std::process::exit(0);
-                    }
                     _ => {}
                 }
             }
@@ -75,9 +72,6 @@ pub fn error() {
             if key_event.kind == KeyEventKind::Press {
                 match key_event.code {
                     KeyCode::Enter => break,
-                    KeyCode::Esc => {
-                        std::process::exit(0);
-                    }
                     _ => {}
                 }
             }

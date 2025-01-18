@@ -4,11 +4,12 @@ use serde::{Deserialize, Serialize};
 use serde_json::error::Category;
 use serde_json::Error;
 use serde_json::Value;
+use zeroize::Zeroize;
 
-pub fn main_menue(backend_url: &String, token: &String, password_hash: &str) {
+pub fn main_menue(backend_url: &String, token: &String, mut password_hash: String) {
     loop {
         // Get the passwords from the backend
-        let json_data_result = api::fetch(backend_url, token, password_hash);
+        let json_data_result = api::fetch(backend_url, token, &password_hash);
 
         match json_data_result {
             Ok((200, Some(json_data))) => {
@@ -21,8 +22,9 @@ pub fn main_menue(backend_url: &String, token: &String, password_hash: &str) {
                     Ok(value) => value,
                     Err(..) => panic!(),
                 };
-                _ = api::update(backend_url, token, password_hash, &json_value);
+                _ = api::update(backend_url, token, &password_hash, &json_value);
                 if entry_return.1 {
+                    password_hash.zeroize();
                     _ = api::logout(backend_url, token);
                 }
             }
@@ -35,7 +37,7 @@ pub fn main_menue(backend_url: &String, token: &String, password_hash: &str) {
                     Ok(value) => value,
                     Err(..) => panic!(),
                 };
-                _ = api::update(backend_url, token, password_hash, &new_json);
+                _ = api::update(backend_url, token, &password_hash, &new_json);
             }
             Ok((401, _)) => {
                 view::update_error(401);
