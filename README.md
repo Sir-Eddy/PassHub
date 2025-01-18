@@ -60,7 +60,7 @@ The rsPass backend must be installed, configured, and accessible. Refer to the [
 
 4. **First-Time Configuration**  
    - **Set Backend URL**: On the first launch, you will be prompted to enter the URL of your rsPass backend.  
-   - **Login or Register**: Provide your credentials or create a new account to start using the CLI.
+   - **Register**: Create a new account to start using the CLI.
 
 ## Configuration
 
