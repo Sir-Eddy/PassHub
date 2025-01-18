@@ -35,11 +35,11 @@ fn main() {
         //Get backend URL
         let backend_url: String = url_check::logik::get_backend_url();
         let token: String;
-        let password_hash: String;
+        let master_key: String;
 
         match first_time {
             Some('r') => {
-                (token, password_hash) = register::logik::register(&backend_url);
+                (token, master_key) = register::logik::register(&backend_url);
                 first_time = Some('l'); // Set screen to login after next logout
             }
             Some('d') => {
@@ -48,9 +48,9 @@ fn main() {
                 std::process::exit(0);
             }
             _ => {
-                (token, password_hash) = login::logik::login(&backend_url);
+                (token, master_key) = login::logik::login(&backend_url);
             }
         }
-        menue::logik::main_menue(&backend_url, &token, &password_hash);
+        menue::logik::main_menue(&backend_url, &token, &master_key);
     }
 }

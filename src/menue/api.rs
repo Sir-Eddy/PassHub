@@ -9,7 +9,7 @@ use sha2::{Digest, Sha256};
 pub fn fetch(
     backend_url: &String,
     jwt_token: &String,
-    user_password_hash: &str,
+    master_key: &str,
 ) -> Result<(u16, Option<Value>), Box<dyn std::error::Error>> {
     // Create HTTP client
     let client = Client::new();
@@ -46,7 +46,7 @@ pub fn fetch(
             }
 
             // Convert user key to bytes
-            let key = derive_key_from_hash(user_password_hash);
+            let key = derive_key_from_hash(master_key);
             let nonce = &decoded_data[..12]; // Use the first 12 bytes as nonce
             let ciphertext = &decoded_data[12..]; // Rest as ciphertext
 
@@ -87,7 +87,7 @@ fn derive_key_from_hash(password_hash: &str) -> [u8; 32] {
 pub fn update(
     backend_url: &String,
     jwt_token: &String,
-    user_password_hash: &str,
+    master_key: &str,
     json_data: &Value,
 ) -> Result<u16, Box<dyn std::error::Error>> {
     // Create HTTP client
@@ -95,7 +95,7 @@ pub fn update(
     let request_url = format!("{}/api/v1/sync/update", backend_url);
 
     // Convert user key to bytes
-    let key = derive_key_from_hash(user_password_hash);
+    let key = derive_key_from_hash(master_key);
 
     // Initialize encryption
     let cipher = Aes256Gcm::new(Key::<aes_gcm::aes::Aes256>::from_slice(&key));

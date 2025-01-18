@@ -16,15 +16,16 @@ pub fn login(backend_url: &str) -> (String, String) {
         let (email, mut cleartext_password) = view::draw_login_screen(stored_email);
 
         // Hash the password
-        match hash_argon_2(&cleartext_password, &email) {
-            Ok(password_hash) => {
+        match hash_argon_2_master_key(&cleartext_password, &email) {
+            Ok(master_key) => {
+                let master_password_hash = hash_argon_2_master_password_hash(&master_key, &cleartext_password);
                 cleartext_password.zeroize(); // Clear plaintext password from memory
 
                 // Proceed with backend login
-                match api::login_backend(backend_url, &email, &password_hash) {
+                match api::login_backend(backend_url, &email, &master_password_hash.unwrap()) {
                     Ok(token) => {
                         save_email_to_storage(&email); // Save email
-                        return (token, password_hash); // Return JWT token
+                        return (token, master_key); // Return JWT token
                     }
                     Err(status) => {
                         match status {
@@ -46,7 +47,7 @@ pub fn login(backend_url: &str) -> (String, String) {
     }
 }
 
-fn hash_argon_2(password: &str, email: &str) -> Result<String, argon2::password_hash::Error> {
+fn hash_argon_2_master_key(password: &str, email: &str) -> Result<String, argon2::password_hash::Error> {
     let salt = SaltString::encode_b64(email.as_bytes())?;
     let params = Params::new(65536, 3, 1, None)?; // 64 MiB, 3 iterations, 1 lane/thread
     let argon2 = Argon2::new(Algorithm::Argon2id, Version::V0x13, params);
@@ -56,9 +57,22 @@ fn hash_argon_2(password: &str, email: &str) -> Result<String, argon2::password_
         .hash_password(password.as_bytes(), &salt)?
         .to_string();
 
-    // (Optional) Verify the hash to ensure correctness
+    // Verify the hash to ensure correctness
     let parsed_hash = PasswordHash::new(&password_hash)?;
     argon2.verify_password(password.as_bytes(), &parsed_hash)?;
+
+    Ok(password_hash)
+}
+
+fn hash_argon_2_master_password_hash(master_key: &str, master_password: &str) -> Result<String, argon2::password_hash::Error> {
+    let salt = SaltString::encode_b64(master_password.as_bytes())?;
+    let params = Params::new(65536, 3, 1, None)?; // 64 MiB, 3 iterations, 1 lane/thread
+    let argon2 = Argon2::new(Algorithm::Argon2id, Version::V0x13, params);
+
+    // Hash the password
+    let password_hash = argon2
+        .hash_password(master_key.as_bytes(), &salt)?
+        .to_string();
 
     Ok(password_hash)
 }
