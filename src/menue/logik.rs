@@ -22,7 +22,7 @@ pub fn main_menue(backend_url: &String, token: &String, password_hash: &str) {
                     Err(..) => panic!(),
                 };
                 _ = api::update(backend_url, token, password_hash, &json_value);
-                if entry_return.1 == true {
+                if entry_return.1 {
                     _ = api::logout(backend_url, token);
                 }
             }
