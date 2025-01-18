@@ -27,20 +27,7 @@ Seamlessly communicate with your rsPass backend secured via HTTPS.
 
 ## Security
 
-**Argon2id Hashing**  
-Argon2id is a highly secure password hashing algorithm, resistant to GPU attacks and optimized for both memory-hardness and speed. Your master password is hashed immediately upon input and never stored in plaintext. The plaintext password is securely erased from memory using `zeroize()`.
-
-**AES-256-GCM Encryption**  
-AES-256-GCM is a state-of-the-art encryption standard that ensures data integrity and confidentiality. All communications with the backend are encrypted, protecting your sensitive information from eavesdropping.
-
-**Strict Password Policies**  
-The master password must meet stringent requirements to ensure high entropy and resistance to brute-force attacks.
-
-**Regular Login**  
-For enhanced security, reauthentication is required every hour. This reduces the window of opportunity for unauthorized access in case of session hijacking.
-
-**JWT Authentication**  
-JSON Web Tokens (JWT) are used to authenticate users and maintain secure communication with the backend. Tokens are stored only in memory during runtime to minimize their exposure to external threats.
+![Security](screenshots/Ablauf.png)
 
 ## Requirements
 
