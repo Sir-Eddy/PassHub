@@ -372,12 +372,14 @@ pub fn display_uris(mut entries: Vec<Entry>) -> Result<(Vec<Entry>, bool), Box<d
                             popup = None;
                             entries.push(new_entry);
                             stateful_list.items.push(new_entry_name);
+                            break;
                         }
                         KeyCode::Delete => {
                             if let Some(index) = stateful_list.get_selected_index() {
                                 popup = None;
                                 stateful_list.delete_selected();
                                 entries.remove(index);
+                                break;
                             };
                         }
                         KeyCode::Esc => {
