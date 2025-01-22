@@ -32,7 +32,7 @@ Seamlessly communicate with your rsPass backend secured via HTTPS.
 ## Requirements
 
 **Running rsPass Backend Server**  
-The rsPass backend must be installed, configured, and accessible. Refer to the [rsPass backend repository](https://github.com/Letgamer/rsPass) for setup instructions.
+The rsPass backend must be installed, configured, and accessible. Refer to the [rsPass backend repository](https://github.com/Letgamer/rsPass/wiki/Deployment) for setup instructions.
 
 ## Installation
 
