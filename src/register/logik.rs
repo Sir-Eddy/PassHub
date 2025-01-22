@@ -4,8 +4,8 @@ use argon2::{
     Algorithm, Argon2, Params, Version,
 };
 use directories::ProjectDirs;
-use regex::Regex;
 use lazy_static::lazy_static;
+use regex::Regex;
 use std::{fs, io::Write};
 use zeroize::Zeroize;
 
@@ -106,7 +106,8 @@ lazy_static! {
     static ref HAS_UPPERCASE: Regex = Regex::new(r"[A-Z]").expect("Regex-Kompilierungsfehler");
     static ref HAS_LOWERCASE: Regex = Regex::new(r"[a-z]").expect("Regex-Kompilierungsfehler");
     static ref HAS_NUMBER: Regex = Regex::new(r"\d").expect("Regex-Kompilierungsfehler");
-    static ref HAS_SPECIAL_CHAR: Regex = Regex::new(r"[!@#$%^&*(),.?\:{}|<>]").expect("Regex-Kompilierungsfehler");
+    static ref HAS_SPECIAL_CHAR: Regex =
+        Regex::new(r"[!@#$%^&*(),.?\:{}|<>]").expect("Regex-Kompilierungsfehler");
 }
 
 pub fn validate_password(password: &str) -> bool {
@@ -118,7 +119,7 @@ pub fn validate_password(password: &str) -> bool {
     // Überprüfe die Regex-Kriterien für das Passwort
     let has_uppercase = HAS_UPPERCASE.is_match(password); // Großbuchstaben
     let has_lowercase = HAS_LOWERCASE.is_match(password); // Kleinbuchstaben
-    let has_number = HAS_NUMBER.is_match(password);       // Zahlen
+    let has_number = HAS_NUMBER.is_match(password); // Zahlen
     let has_special_char = HAS_SPECIAL_CHAR.is_match(password); // Sonderzeichen
 
     // Alle Kriterien müssen erfüllt sein
