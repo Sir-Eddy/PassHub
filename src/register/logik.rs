@@ -21,7 +21,12 @@ pub fn register(backend_url: &str) -> (String, String) {
                 cleartext_password.zeroize(); // Clear plaintext password from memory
 
                 // Proceed with backend login
-                match api::login_backend(backend_url, &email, &master_password_hash.unwrap()) {
+                match api::login_backend(
+                    backend_url,
+                    &email,
+                    &master_password_hash
+                        .expect("Register: Error occurred extracting master password"),
+                ) {
                     Ok(token) => {
                         save_email_to_storage(&email); // Save email
                         return (token, master_key); // Return JWT token
@@ -103,11 +108,20 @@ pub fn validate_password(password: &str) -> bool {
     }
 
     // Regex criteria for password validation
-    let has_uppercase = Regex::new(r"[A-Z]").unwrap().is_match(password); // Uppercase letters
-    let has_lowercase = Regex::new(r"[a-z]").unwrap().is_match(password); // Lowercase letters
-    let has_number = Regex::new(r"\d").unwrap().is_match(password); // Numbers
+    let has_uppercase = Regex::new(r"[A-Z]")
+        .expect("Register: Regex error")
+        .is_match(password); // Uppercase letters
+
+    let has_lowercase = Regex::new(r"[a-z]")
+        .expect("Register: Regex error")
+        .is_match(password); // Lowercase letters
+
+    let has_number = Regex::new(r"\d")
+        .expect("Register: Regex error")
+        .is_match(password); // Numbers
+
     let has_special_char = Regex::new(r"[!@#$%^&*(),.?\:{}|<>]")
-        .unwrap()
+        .expect("Register: Regex error")
         .is_match(password); // Special characters
 
     // All criteria must be met

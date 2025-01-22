@@ -34,7 +34,7 @@ pub fn fetch(
             }
 
             // Extract Base64 string from the JSON response
-            let json_response = json_response.unwrap();
+            let json_response = json_response.expect("Menue: Error extracting JSON response");
             let base64_data = json_response["encrypted_data"].as_str().unwrap_or("");
 
             // Base64 decoding
@@ -69,7 +69,9 @@ fn decrypt_aes256_gcm(key: &[u8], nonce: &[u8], ciphertext: &[u8]) -> Vec<u8> {
     let nonce = Nonce::from_slice(nonce);
 
     // Decrypt
-    cipher.decrypt(nonce, ciphertext).unwrap()
+    cipher
+        .decrypt(nonce, ciphertext)
+        .expect("Menue: Error decrypting data")
 }
 
 fn derive_key_from_hash(password_hash: &str) -> [u8; 32] {

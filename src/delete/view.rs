@@ -32,12 +32,7 @@ pub fn draw_delete_screen() {
 
         // Wait for user input to dismiss the error screen
         if let Event::Key(key_event) = event::read().unwrap() {
-            if key_event.kind == KeyEventKind::Press {
-                match key_event.code {
-                    KeyCode::Enter => break,
-                    _ => {}
-                }
-            }
+            if key_event.kind == KeyEventKind::Press && key_event.code == KeyCode::Enter { break }
         }
     }
 
@@ -69,12 +64,7 @@ pub fn error() {
 
         // Wait for user input to dismiss the error screen
         if let Event::Key(key_event) = event::read().unwrap() {
-            if key_event.kind == KeyEventKind::Press {
-                match key_event.code {
-                    KeyCode::Enter => break,
-                    _ => {}
-                }
-            }
+            if key_event.kind == KeyEventKind::Press && key_event.code == KeyCode::Enter { break }
         }
     }
 

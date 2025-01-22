@@ -13,10 +13,12 @@ pub fn main_menue(backend_url: &String, token: &String, mut password_hash: Strin
 
         match json_data_result {
             Ok((200, Some(json_data))) => {
-                let entry_return = view::display_data(&json_data).unwrap();
+                let entry_return = view::display_data(&json_data)
+                    .expect("Menue: Error occurred displaying the data");
                 let entries = entry_return.0;
 
-                let json_string = serialize_json(&entries).unwrap();
+                let json_string =
+                    serialize_json(&entries).expect("Menue: Error occurred serializing the JSON");
                 let json_string = json_string.as_str();
                 let json_value: Value = match serde_json::from_str(json_string) {
                     Ok(value) => value,
@@ -31,7 +33,8 @@ pub fn main_menue(backend_url: &String, token: &String, mut password_hash: Strin
             Ok((200, None)) => {
                 let new_json: Entry = view::display_data_empty();
                 let new_json = vec![new_json];
-                let new_json = serialize_json(&new_json).unwrap();
+                let new_json = serialize_json(&new_json)
+                    .expect("Menue: Error occurred serializing the new JSON");
                 let json_string = new_json.as_str();
                 let new_json: Value = match serde_json::from_str(json_string) {
                     Ok(value) => value,
@@ -76,19 +79,19 @@ pub fn deserialize_json(json_data: &Value) -> Result<Vec<Entry>, Error> {
         Ok(entry_list) => Ok(entry_list),
         Err(e) => match e.classify() {
             Category::Io => {
-                debug!("Failed to read or write bytes on an I/O stream");
+                debug!("Menue: Failed to read or write bytes on an I/O stream");
                 Err(e)
             }
             Category::Syntax => {
-                debug!("Input is not syntactically valid JSON");
+                debug!("Menue: Input is not syntactically valid JSON");
                 Err(e)
             }
             Category::Data => {
-                debug!("Input data is semantically incorrect");
+                debug!("Menue: Input data is semantically incorrect");
                 Err(e)
             }
             Category::Eof => {
-                debug!("Unexpected end of the input data");
+                debug!("Menue: Unexpected end of the input data");
                 Err(e)
             }
         },

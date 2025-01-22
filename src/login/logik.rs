@@ -23,7 +23,12 @@ pub fn login(backend_url: &str) -> (String, String) {
                 cleartext_password.zeroize(); // Clear plaintext password from memory
 
                 // Proceed with backend login
-                match api::login_backend(backend_url, &email, &master_password_hash.unwrap()) {
+                match api::login_backend(
+                    backend_url,
+                    &email,
+                    &master_password_hash
+                        .expect("Login: Error occurred extracting master password"),
+                ) {
                     Ok(token) => {
                         save_email_to_storage(&email); // Save email
                         return (token, master_key); // Return JWT token

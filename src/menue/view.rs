@@ -575,13 +575,14 @@ impl<'a> PasswordPopup<'a> {
                 } else {
                     Span::raw("(none)").style(Style::default().fg(Color::Rgb(255, 163, 26)))
                 }
-            } 
-            else if self.entry.login.username.is_some() {
-                Span::styled(self.entry.login.username.as_ref().unwrap(), Style::default())
-            }
-            else {
+            } else if self.entry.login.username.is_some() {
+                Span::styled(
+                    self.entry.login.username.as_ref().unwrap(),
+                    Style::default(),
+                )
+            } else {
                 Span::styled("(none)", Style::default())
-            }
+            },
         ]));
 
         content.lines.push(Line::from(vec![
