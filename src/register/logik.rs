@@ -5,6 +5,7 @@ use argon2::{
 };
 use directories::ProjectDirs;
 use regex::Regex;
+use lazy_static::lazy_static;
 use std::{fs, io::Write};
 use zeroize::Zeroize;
 
@@ -101,29 +102,25 @@ fn save_email_to_storage(email: &str) {
     }
 }
 
+lazy_static! {
+    static ref HAS_UPPERCASE: Regex = Regex::new(r"[A-Z]").expect("Regex-Kompilierungsfehler");
+    static ref HAS_LOWERCASE: Regex = Regex::new(r"[a-z]").expect("Regex-Kompilierungsfehler");
+    static ref HAS_NUMBER: Regex = Regex::new(r"\d").expect("Regex-Kompilierungsfehler");
+    static ref HAS_SPECIAL_CHAR: Regex = Regex::new(r"[!@#$%^&*(),.?\:{}|<>]").expect("Regex-Kompilierungsfehler");
+}
+
 pub fn validate_password(password: &str) -> bool {
-    // Condition: Password must be at least 10 characters long
+    // Bedingung: Das Passwort muss mindestens 10 Zeichen lang sein
     if password.len() < 10 {
         return false;
     }
 
-    // Regex criteria for password validation
-    let has_uppercase = Regex::new(r"[A-Z]")
-        .expect("Register: Regex error")
-        .is_match(password); // Uppercase letters
+    // Überprüfe die Regex-Kriterien für das Passwort
+    let has_uppercase = HAS_UPPERCASE.is_match(password); // Großbuchstaben
+    let has_lowercase = HAS_LOWERCASE.is_match(password); // Kleinbuchstaben
+    let has_number = HAS_NUMBER.is_match(password);       // Zahlen
+    let has_special_char = HAS_SPECIAL_CHAR.is_match(password); // Sonderzeichen
 
-    let has_lowercase = Regex::new(r"[a-z]")
-        .expect("Register: Regex error")
-        .is_match(password); // Lowercase letters
-
-    let has_number = Regex::new(r"\d")
-        .expect("Register: Regex error")
-        .is_match(password); // Numbers
-
-    let has_special_char = Regex::new(r"[!@#$%^&*(),.?\:{}|<>]")
-        .expect("Register: Regex error")
-        .is_match(password); // Special characters
-
-    // All criteria must be met
+    // Alle Kriterien müssen erfüllt sein
     has_uppercase && has_lowercase && has_number && has_special_char
 }
