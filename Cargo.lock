@@ -1395,7 +1395,7 @@ dependencies = [
  "lazy_static",
  "log",
  "rand",
- "rand_core 0.6.4",
+ "rand_core 0.9.0",
  "ratatui",
  "regex",
  "reqwest",
