@@ -27,8 +27,7 @@ Seamlessly communicate with your rsPass backend secured via HTTPS.
 
 ## Security
 
-![Security](screenshots/Ablauf-Rounded.png)
-
+![Security](screenshots/Ablauf.svg)
 ## Requirements
 
 **Running rsPass Backend Server**  
